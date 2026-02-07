@@ -1,12 +1,12 @@
 <template>
   <div class="about wrap">
-    <h1>TZ-Chat Gateway</h1>
+    <h1>TZ-Chat</h1>
     <p class="tagline">Unified chat API in front of Dify. Part of the tz-chatbot stack.</p>
 
     <div class="card">
       <h2>What this is</h2>
       <p>
-        This service is the <strong>TZ-Chat Gateway</strong>: a single API and chat UI for multiple apps (e.g. DrillQuiz, CoinTutor).
+        This service is the <strong>TZ-Chat</strong>: a single API and chat UI for multiple apps (e.g. DrillQuiz, CoinTutor).
         It sits in front of <a href="https://dify.ai" target="_blank" rel="noopener" class="link">Dify</a>,
         manages users and conversations, and can sync chat history to its own database for support and analytics.
         Sample integration: <a href="https://devops.drillquiz.com/" target="_blank" rel="noopener" class="link">devops.drillquiz.com</a> (DrillQuiz).
@@ -17,7 +17,7 @@
       <h2>Project: tz-chatbot</h2>
       <p>
         The full stack runs on Kubernetes: <strong>MinIO</strong> (object store), <strong>Qdrant</strong> (vector DB),
-        <strong>RAG backends</strong> (CoinTutor / DrillQuiz), <strong>Dify</strong> (chatbots), and this <strong>TZ-Chat Gateway</strong>.
+        <strong>RAG backends</strong> (CoinTutor / DrillQuiz), <strong>Dify</strong> (chatbots), and this <strong>TZ-Chat</strong>.
         RAG ingestion runs on a schedule; Dify apps call the RAG backends as tools.
       </p>
     </div>
@@ -50,7 +50,7 @@
       </div>
       <div class="arch-arrow-row">↓</div>
       <div class="seq-row">
-        <span class="seq-label">TZ-Chat Gateway</span>
+        <span class="seq-label">TZ-Chat</span>
         <span class="seq-box">Validate JWT/API Key → sync conversation/messages to DB → proxy to Dify API</span>
       </div>
       <div class="arch-arrow-row">↓</div>
@@ -66,7 +66,7 @@
       <div class="arch-arrow-row">↓</div>
       <div class="seq-row">
         <span class="seq-label">Response</span>
-        <span class="seq-box">Dify → TZ-Chat Gateway → client (streaming or normal response)</span>
+        <span class="seq-box">Dify → TZ-Chat → client (streaming or normal response)</span>
       </div>
     </div>
 
@@ -77,13 +77,13 @@
       <div class="arch-arrow-row">Ingress (TLS / routing)</div>
       <div class="arch-arrow-row">↓</div>
       <div class="arch-grid">
-        <div class="arch-box entry">TZ-Chat Gateway<br><small>(FastAPI)</small></div>
+        <div class="arch-box entry">TZ-Chat<br><small>(FastAPI)</small></div>
         <div class="arch-box gw">Dify<br><small>DrillQuiz / CoinTutor</small></div>
         <div class="arch-box app">RAG Backend<br><small>CoinTutor, DrillQuiz</small></div>
         <div class="arch-box data">Qdrant<br><small>vector DB</small></div>
         <div class="arch-box data">MinIO<br><small>object store</small></div>
       </div>
-      <p class="arch-note">TZ-Chat Gateway: auth, conversation management, Dify proxy. Dify: calls RAG as tool. RAG: MinIO docs + Qdrant vector search.</p>
+      <p class="arch-note">TZ-Chat: auth, conversation management, Dify proxy. Dify: calls RAG as tool. RAG: MinIO docs + Qdrant vector search.</p>
     </div>
 
     <h2 class="section-title">4. Apply to your project</h2>
@@ -91,7 +91,7 @@
     <div class="diagram">
       <div class="diagram-title">Integration order</div>
       <div class="flow-row">
-        <span class="flow-step">1. Deploy TZ-Chat Gateway</span>
+        <span class="flow-step">1. Deploy TZ-Chat</span>
         <span class="flow-arrow">→</span>
         <span class="flow-step">2. Configure env</span>
         <span class="flow-arrow">→</span>
@@ -103,7 +103,7 @@
       </div>
       <div class="seq-row">
         <span class="seq-label">1. Deploy</span>
-        <span class="seq-box">Run TZ-Chat Gateway on server (Docker/K8s or <code>./gateway.sh</code>). Set JWT secret, Dify API key, <code>CHAT_GATEWAY_API_KEY</code> in <code>.env</code>.</span>
+        <span class="seq-box">Run TZ-Chat on server (Docker/K8s or <code>./gateway.sh</code>). Set JWT secret, Dify API key, <code>CHAT_GATEWAY_API_KEY</code> in <code>.env</code>.</span>
       </div>
       <div class="seq-row">
         <span class="seq-label">2. Env</span>
@@ -119,7 +119,7 @@
       </div>
       <div class="seq-row">
         <span class="seq-label">5. CORS·CSP</span>
-        <span class="seq-box">Allow your project domain in TZ-Chat Gateway (<code>ALLOWED_CHAT_TOKEN_ORIGINS</code>). If the app has CSP, add TZ-Chat Gateway URL to <code>connect-src</code> and <code>frame-src</code>.</span>
+        <span class="seq-box">Allow your project domain in TZ-Chat (<code>ALLOWED_CHAT_TOKEN_ORIGINS</code>). If the app has CSP, add TZ-Chat URL to <code>connect-src</code> and <code>frame-src</code>.</span>
       </div>
       <p class="arch-note">
         Full steps: <a href="https://github.com/doohee323/tz-chatbot/blob/main/chat-gateway/sample/INTEGRATION.md" target="_blank" rel="noopener" class="link">sample/INTEGRATION.md</a>

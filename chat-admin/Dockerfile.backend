@@ -1,4 +1,4 @@
-# TZ-Chat Gateway Backend (use after build_frontend populates static/)
+# TZ-Chat Backend (use after build_frontend populates static/)
 # docker build -f Dockerfile.backend .
 FROM python:3.11-slim
 

@@ -50,12 +50,12 @@ async def lifespan(app: FastAPI):
     await init_db()
     await refresh_allowed_systems()
     task = asyncio.create_task(_periodic_refresh())
-    logger.info("TZ-Chat Gateway ready")
+    logger.info("TZ-Chat ready")
     yield
     task.cancel()
 
 
-app = FastAPI(title="TZ-Chat Gateway", description="TZ-Chat Gateway in front of Dify", lifespan=lifespan)
+app = FastAPI(title="TZ-Chat", description="TZ-Chat in front of Dify", lifespan=lifespan)
 
 # CORS: required for frontends (e.g. DrillQuiz) calling /v1/chat-token. OPTIONS preflight + X-API-Key allowed.
 CORS_ORIGINS_DEFAULT = [

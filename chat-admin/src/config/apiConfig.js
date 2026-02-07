@@ -1,5 +1,5 @@
 /**
- * API config for TZ-Chat Gateway frontend (tz-cointutor style)
+ * API config for TZ-Chat frontend (tz-cointutor style)
  * VUE_APP_API_BASE: API base URL for links to /docs, /cache (empty = same origin)
  * VUE_APP_CHAT_GATEWAY_URL: Chat API base for /v1/conversations, /v1/chat etc. (empty = same origin, for dev proxy)
  */

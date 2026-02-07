@@ -130,7 +130,7 @@ export default {
     restartHint: 'Please wait (up to 2 min)'
   },
   about: {
-    title: 'TZ-Chat Gateway',
+    title: 'TZ-Chat',
     tagline: 'Unified chat API in front of Dify. Part of the tz-chatbot stack.',
     whatIs: 'What this is',
     project: 'Project: tz-chatbot',

@@ -1,5 +1,5 @@
 # Frontend build env (CI/local). VUE_APP_* are baked into the build.
-# TZ-Chat Gateway URL (for /docs, /cache links - empty = same origin)
+# TZ-Chat URL (for /docs, /cache links - empty = same origin)
 # VUE_APP_API_BASE=
 # Chat API base for /v1/conversations, /v1/chat (CI replaces BASE_DOMAIN_PLACEHOLDER → drillquiz.com)
 VUE_APP_CHAT_GATEWAY_URL=https://chat.BASE_DOMAIN_PLACEHOLDER

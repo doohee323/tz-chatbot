@@ -1,4 +1,4 @@
-# TZ-Chat Gateway (FastAPI) - single service (tz-cointutor style)
+# TZ-Chat (FastAPI) - single service (tz-cointutor style)
 # Multi-stage: build Vue frontend at root, then Python runtime
 FROM node:18-alpine AS frontend
 WORKDIR /build

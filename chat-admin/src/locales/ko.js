@@ -130,7 +130,7 @@ export default {
     restartHint: '잠시만 기다려 주세요 (최대 2분)'
   },
   about: {
-    title: 'TZ-Chat Gateway',
+    title: 'TZ-Chat',
     tagline: 'Unified chat API in front of Dify. Part of the tz-chatbot stack.',
     whatIs: 'What this is',
     project: 'Project: tz-chatbot',

@@ -5,7 +5,7 @@
     <div class="card">
       <h2>What this is</h2>
       <p>
-        This service is the <strong>TZ-Chat Gateway</strong>: a single API and chat UI for multiple apps (e.g. DrillQuiz, CoinTutor).
+        This service is the <strong>TZ-Chat</strong>: a single API and chat UI for multiple apps (e.g. DrillQuiz, CoinTutor).
         It sits in front of <a href="https://dify.ai" target="_blank" rel="noopener" class="link">Dify</a>,
         manages users and conversations, and can sync chat history to its own database for support and analytics.
         Sample integration: <a href="https://devops.drillquiz.com/" target="_blank" rel="noopener" class="link">devops.drillquiz.com</a> (DrillQuiz).
@@ -16,7 +16,7 @@
       <h2>Project: tz-chatbot</h2>
       <p>
         The full stack runs on Kubernetes: <strong>MinIO</strong> (object store), <strong>Qdrant</strong> (vector DB),
-        <strong>RAG backends</strong> (CoinTutor / DrillQuiz), <strong>Dify</strong> (chatbots), and this <strong>TZ-Chat Gateway</strong>.
+        <strong>RAG backends</strong> (CoinTutor / DrillQuiz), <strong>Dify</strong> (chatbots), and this <strong>TZ-Chat</strong>.
         RAG ingestion runs on a schedule; Dify apps call the RAG backends as tools.
       </p>
     </div>

@@ -1,4 +1,4 @@
-# TZ-Chat Gateway
+# TZ-Chat
 
 **Chat gateway** in front of Dify: client systems (DrillQuiz, CoinTutor, etc.) call this API only; users and conversations are managed centrally by the gateway.
 
@@ -8,10 +8,10 @@
 
 When the server is running, the **root URL** (`http://localhost:8000/` or `https://<gateway-host>/`) serves an intro page that describes:
 
-- **What TZ-Chat Gateway is** and how it fits in the tz-chatbot stack
+- **What TZ-Chat is** and how it fits in the tz-chatbot stack
 - **Workflow**: check out this repo → register your app (using sample apps DrillQuiz / CoinTutor as reference) → get token & open chat → chat
 - **How the app operates**: request flow from client through the gateway and Dify to RAG, then back
-- **Architecture**: components (Ingress, TZ-Chat Gateway, Dify, RAG Backend, Qdrant, MinIO) and their roles
+- **Architecture**: components (Ingress, TZ-Chat, Dify, RAG Backend, Qdrant, MinIO) and their roles
 - **Apply to your project**: steps to add chat to an existing app (deploy gateway, env, backend token, frontend widget, CORS & CSP)
 
 The page also links to the **sample integration site** ([devops.drillquiz.com](https://devops.drillquiz.com/)), GitHub source, API docs (`/docs`), chat page (`/chat`), and cache/history UI (`/cache`).
@@ -166,7 +166,7 @@ Example JWT (HS256) when your system sends users to the chat page:
 ## Architecture
 
 ```
-[DrillQuiz / CoinTutor / ...] → [TZ-Chat Gateway] → Dify API
+[DrillQuiz / CoinTutor / ...] → [TZ-Chat] → Dify API
                                       ↓
                                SQLite (conversation mapping + conversation_cache, message_cache)
 ```

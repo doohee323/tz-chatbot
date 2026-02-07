@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="TZ-Chat Gateway", description="TZ-Chat Gateway in front of Dify", lifespan=lifespan)
+app = FastAPI(title="TZ-Chat", description="TZ-Chat in front of Dify", lifespan=lifespan)
 
 # CORS: required for frontends (e.g. DrillQuiz) calling /v1/chat-token. OPTIONS preflight + X-API-Key allowed.
 CORS_ORIGINS_DEFAULT = [
