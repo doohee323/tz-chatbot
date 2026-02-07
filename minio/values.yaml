@@ -1,0 +1,34 @@
+## MinIO Helm Chart Values (official MinIO Helm chart)
+##
+## To fetch default values run:
+##   helm repo add minio https://charts.min.io/
+##   helm repo update
+##   helm show values minio/minio --version 5.4.0 > values.yaml
+##
+## To inspect applied values:
+##   helm get values minio -n devops
+
+## MinIO Authentication parameters
+## Root user access key
+accessKey: "k8s_project"
+
+## Root user secret key
+secretKey: "basic_password"
+
+## MinIO Replica configuration
+## StatefulSet replicas (distributed mode)
+replicas: 3
+
+## MinIO Persistence configuration
+persistence:
+  ## Storage class for PersistentVolumeClaim
+  ## Use nfs-client storage class
+  storageClass: "nfs-client"
+  ## Storage size per pod
+  size: 5Gi
+
+## MinIO Resource requests and limits
+resources:
+  requests:
+    ## Memory request
+    memory: 1Gi

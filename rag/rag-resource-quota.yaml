@@ -1,0 +1,14 @@
+# Traffic/resource control (§3): rag namespace limits
+# Adjust values or remove as needed
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: rag-quota
+  namespace: rag
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    pods: "20"

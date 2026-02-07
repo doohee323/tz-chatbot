@@ -1,0 +1,63 @@
+# CoinTutor RAG backend OpenAPI schema (for Dify custom tool)
+# In Dify "Create custom tool" → paste this into the schema field
+# CoinTutor only: calls rag-backend (rag_docs_cointutor)
+openapi: 3.0.0
+info:
+  title: CoinTutor RAG API
+  description: CoinTutor RAG search API (Qdrant rag_docs_cointutor)
+  version: 1.0.0
+servers:
+  - url: http://rag-backend.rag.svc.cluster.local:8000
+    description: CoinTutor RAG Backend (in-cluster)
+paths:
+  /query:
+    post:
+      summary: Search CoinTutor knowledge by question
+      description: Vector search on rag_docs_cointutor with user question, returns related chunks
+      operationId: query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question
+              properties:
+                question:
+                  type: string
+                  description: User question
+                top_k:
+                  type: integer
+                  default: 5
+                  description: Number of results to return
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  question:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text:
+                          type: string
+                        source:
+                          type: string
+                        path:
+                          type: string
+                        score:
+                          type: number
+  /health:
+    get:
+      summary: Health check
+      operationId: health
+      responses:
+        "200":
+          description: OK

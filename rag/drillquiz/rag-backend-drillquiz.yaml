@@ -1,0 +1,167 @@
+# RAG Backend DrillQuiz only (approach A: two backends)
+# ConfigMap rag-backend-drillquiz-script, Secret rag-ingestion-secret-drillquiz (each DrillQuiz-specific)
+# COLLECTION=rag_docs_drillquiz fixed
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rag-backend-drillquiz-script
+  namespace: rag
+data:
+  main.py: |
+    from fastapi import FastAPI, HTTPException, Request
+    from fastapi.responses import JSONResponse
+    from pydantic import BaseModel
+    import os
+    import uvicorn
+    from qdrant_client import QdrantClient
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+
+    limiter = Limiter(key_func=get_remote_address)
+    app = FastAPI(title="RAG Backend DrillQuiz")
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    QDRANT_HOST = os.environ.get("QDRANT_HOST", "qdrant")
+    QDRANT_PORT = int(os.environ.get("QDRANT_PORT", "6333"))
+    COLLECTION = os.environ.get("QDRANT_COLLECTION", "rag_docs_drillquiz")
+    GEMINI_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    EMBED_MODEL = os.environ.get("EMBEDDING_MODEL", "gemini-embedding-001")
+
+    def get_qdrant():
+        return QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, check_compatibility=False)
+
+    def embed_query(text: str) -> list[float]:
+        if not GEMINI_KEY:
+            raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY required")
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=GEMINI_KEY)
+        result = client.models.embed_content(
+            model=EMBED_MODEL,
+            contents=text,
+            config=types.EmbedContentConfig(
+                task_type="RETRIEVAL_QUERY",
+                output_dimensionality=1536,
+            ),
+        )
+        e = result.embeddings[0]
+        v = getattr(e, "values", e)
+        return list(v) if not isinstance(v, list) else v
+
+    class QueryRequest(BaseModel):
+        question: str
+        top_k: int = 5
+        collection: str | None = None
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    @app.post("/query")
+    @limiter.limit(os.environ.get("RATE_LIMIT_QUERY", "20/minute"))
+    def query(req: QueryRequest, request: Request):
+        try:
+            question = (req.question or "").strip() or ""
+            coll = (req.collection or "").strip() or COLLECTION
+            query_vector = embed_query(question) if question else []
+            if not query_vector:
+                body = {"question": question, "results": []}
+                return JSONResponse(content=body, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
+            client = get_qdrant()
+            response = client.query_points(
+                collection_name=coll,
+                query=query_vector,
+                limit=req.top_k,
+            )
+            points = getattr(response, "points", None) or getattr(response, "result", None) or []
+            if points is None:
+                points = []
+            results = [
+                {
+                    "text": (getattr(p, "payload", None) or {}).get("text", ""),
+                    "source": (getattr(p, "payload", None) or {}).get("source", ""),
+                    "path": (getattr(p, "payload", None) or {}).get("path", ""),
+                    "score": getattr(p, "score", None),
+                }
+                for p in points
+            ]
+            body = {"question": question, "results": results}
+            return JSONResponse(
+                content=body,
+                headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    if __name__ == "__main__":
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-backend-drillquiz
+  namespace: rag
+  labels:
+    app: rag-backend-drillquiz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-backend-drillquiz
+  template:
+    metadata:
+      labels:
+        app: rag-backend-drillquiz
+    spec:
+      containers:
+      - name: backend
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          pip install --no-cache-dir fastapi uvicorn qdrant-client google-genai slowapi 2>/dev/null
+          cp /config/main.py /tmp/main.py && exec python /tmp/main.py
+        envFrom:
+        - secretRef:
+            name: rag-ingestion-secret-drillquiz
+        env:
+        - name: QDRANT_HOST
+          value: "qdrant"
+        - name: QDRANT_PORT
+          value: "6333"
+        - name: QDRANT_COLLECTION
+          value: "rag_docs_drillquiz"
+        - name: EMBEDDING_MODEL
+          value: "gemini-embedding-001"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "100m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: config
+        configMap:
+          name: rag-backend-drillquiz-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-backend-drillquiz
+  namespace: rag
+spec:
+  selector:
+    app: rag-backend-drillquiz
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http

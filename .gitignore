@@ -1,0 +1,27 @@
+# Env (secrets)
+.env
+chat-gateway/.env
+
+# Backup / generated files from install scripts
+*_bak
+*_bak.*
+*_bake
+*.yaml_bak
+*.yaml_bak.*
+*.yamle
+
+# Refer folder
+refer/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.db
+
+# Node
+node_modules/
