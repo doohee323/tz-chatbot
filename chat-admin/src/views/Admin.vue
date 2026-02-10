@@ -6,11 +6,11 @@
     </div>
     <div class="filters-card">
     <div class="filters">
-      <label>{{ $t('admin.system') }} <input v-model="filters.systemId" placeholder="e.g. cointutor" /></label>
-      <label>{{ $t('admin.user') }} <input v-model="filters.userId" placeholder="e.g. 12345" /></label>
+      <label>{{ $t('admin.system') }} <input v-model="filters.systemId" placeholder="e.g. drillquiz" required /></label>
+      <label>{{ $t('admin.user') }} <input v-model="filters.userId" placeholder="e.g. doohee323" required /></label>
       <label>{{ $t('admin.from') }} <input v-model="filters.fromDate" type="date" /></label>
       <label>{{ $t('admin.to') }} <input v-model="filters.toDate" type="date" /></label>
-      <button class="btn-search" @click="doSearch">{{ $t('common.search') }}</button>
+      <button class="btn-search" @click="doSearch" :disabled="!canSearch">{{ $t('common.search') }}</button>
       <button v-if="conversations.length > 0" class="btn-select" @click="toggleSelectAll">{{ allSelected ? $t('admin.deselectAll') : $t('admin.selectAll') }}</button>
       <button v-if="selectedIds.size > 0" class="btn-delete" @click="deleteSelected" :disabled="deleting">{{ deleting ? $t('common.deleting') : $t('admin.deleteSelected') + ' (' + selectedIds.size + ')' }}</button>
     </div>
@@ -78,6 +78,9 @@ export default {
     }
   },
   computed: {
+    canSearch() {
+      return this.filters.systemId.trim() && this.filters.userId.trim()
+    },
     allSelected() {
       return this.conversations.length > 0 && this.selectedIds.size === this.conversations.length
     }
@@ -95,12 +98,13 @@ export default {
       return token ? { 'Authorization': 'Bearer ' + token } : {}
     },
     async doSearch() {
+      if (!this.canSearch) return
       this.loading = true
       const params = new URLSearchParams()
       const sys = this.filters.systemId.trim()
       const usr = this.filters.userId.trim()
-      if (sys) params.set('system_id', sys)
-      if (usr) params.set('user_id', usr)
+      params.set('system_id', sys)
+      params.set('user_id', usr)
       if (this.filters.fromDate) params.set('from_date', this.filters.fromDate)
       if (this.filters.toDate) params.set('to_date', this.filters.toDate)
       try {
@@ -194,12 +198,16 @@ export default {
         await this.doSearch()
       }
     },
-    formatDate(iso) {
-      if (!iso) return '-'
+    formatDate(val) {
+      if (val == null || val === '') return '-'
       try {
-        const d = new Date(iso)
-        return isNaN(d.getTime()) ? iso : d.toLocaleString()
-      } catch (_) { return iso }
+        let ms = val
+        if (typeof val === 'number' && val > 0 && val < 1e12) {
+          ms = val * 1000
+        }
+        const d = new Date(ms)
+        return isNaN(d.getTime()) ? String(val) : d.toLocaleString()
+      } catch (_) { return String(val) }
     },
   }
 }
@@ -228,7 +236,8 @@ export default {
 .filters input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
 .filters input:focus { outline: none; border-color: var(--primary); }
 .btn-search { padding: 0.5rem 1rem; background: linear-gradient(to right, var(--primary), var(--secondary)); color: #fff; border: none; border-radius: 0.75rem; cursor: pointer; font-weight: 600; }
-.btn-search:hover { box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4); }
+.btn-search:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4); }
+.btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-select { padding: 0.5rem 1rem; background: rgba(15, 23, 42, 0.6); color: #9ca3af; border: 1px solid var(--border-20); border-radius: 0.75rem; cursor: pointer; }
 .btn-select:hover { background: rgba(30, 41, 59, 0.8); color: #fff; }
 .btn-delete { padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.2); color: #f87171; border: none; border-radius: 0.75rem; cursor: pointer; }
