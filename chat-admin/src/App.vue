@@ -57,10 +57,13 @@
     <main class="app-main">
       <router-view />
     </main>
+    <Toast />
   </div>
 </template>
 
 <script>
+import Toast from './components/Toast.vue'
+
 const TOKEN_KEY = 'admin_token'
 
 function parseUsernameFromToken(token) {
@@ -77,6 +80,7 @@ function parseUsernameFromToken(token) {
 
 export default {
   name: 'App',
+  components: { Toast },
   data() {
     return {
       showLangMenu: false,

@@ -62,7 +62,6 @@
             minlength="6"
           >
         </div>
-        <p v-if="error" class="error-msg">{{ error }}</p>
         <button type="submit" class="btn-submit" :disabled="loading">
           {{ loading ? $t('auth.registering') : $t('auth.registerButton') }}
         </button>
@@ -87,19 +86,17 @@ export default {
       email: '',
       password: '',
       passwordConfirm: '',
-      loading: false,
-      error: ''
+      loading: false
     }
   },
   methods: {
     async handleRegister() {
-      this.error = ''
       if (this.password.length < 6) {
-        this.error = this.$t('auth.passwordMinLength')
+        this.$toast.error(this.$t('auth.passwordMinLength'))
         return
       }
       if (this.password !== this.passwordConfirm) {
-        this.error = this.$t('auth.passwordMismatch')
+        this.$toast.error(this.$t('auth.passwordMismatch'))
         return
       }
       this.loading = true
@@ -126,7 +123,7 @@ export default {
         localStorage.setItem(TOKEN_KEY, token)
         this.$router.replace('/admin')
       } catch (e) {
-        this.error = e.message || this.$t('auth.registerError')
+        this.$toast.error(e.message || this.$t('auth.registerError'))
       } finally {
         this.loading = false
       }

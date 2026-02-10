@@ -15,7 +15,6 @@
       <button v-if="selectedIds.size > 0" class="btn-delete" @click="deleteSelected" :disabled="deleting">{{ deleting ? $t('common.deleting') : $t('admin.deleteSelected') + ' (' + selectedIds.size + ')' }}</button>
     </div>
     </div>
-    <p v-if="error" class="error">{{ error }}</p>
     <div class="conv-table-wrap">
     <table class="conv-table">
       <thead>
@@ -75,7 +74,6 @@ export default {
       filters: { systemId: '', userId: '', fromDate: '', toDate: '' },
       loading: false,
       deleting: false,
-      error: '',
       hasSearched: false
     }
   },
@@ -97,7 +95,6 @@ export default {
       return token ? { 'Authorization': 'Bearer ' + token } : {}
     },
     async doSearch() {
-      this.error = ''
       this.loading = true
       const params = new URLSearchParams()
       const sys = this.filters.systemId.trim()
@@ -120,13 +117,12 @@ export default {
         this.messages = []
         this.hasSearched = true
       } catch (e) {
-        this.error = e.message
+        this.$toast.error(e.message)
       } finally {
         this.loading = false
       }
     },
     async loadMessages(c) {
-      this.error = ''
       try {
         const url = '/v1/admin/conversations/' + encodeURIComponent(c.conversation_id) + '/messages?system_id=' + encodeURIComponent(c.system_id) + '&user_id=' + encodeURIComponent(c.user_id)
         const r = await fetch(url, { headers: this.authHeaders() })
@@ -139,7 +135,7 @@ export default {
         this.messages = await r.json()
         this.selectedConv = c
       } catch (e) {
-        this.error = e.message
+        this.$toast.error(e.message)
       }
     },
     _convKey(c) {
@@ -166,7 +162,6 @@ export default {
     },
     async deleteSelected() {
       if (this.selectedIds.size === 0) return
-      this.error = ''
       this.deleting = true
       const toDelete = this.conversations.filter(c => this.selectedIds.has(this._convKey(c)))
       let failed = 0
@@ -183,13 +178,13 @@ export default {
           }
           if (!r.ok) {
             const text = await r.text()
-            try { const j = JSON.parse(text); this.error = (j.detail || text).toString() } catch (_) { this.error = text }
+            try { const j = JSON.parse(text); this.$toast.error((j.detail || text).toString()) } catch (_) { this.$toast.error(text) }
             failed++
           } else {
             this.selectedIds.delete(this._convKey(c))
           }
         } catch (e) {
-          this.error = e.message
+          this.$toast.error(e.message)
           failed++
         }
       }

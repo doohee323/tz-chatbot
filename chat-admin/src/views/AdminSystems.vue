@@ -85,7 +85,6 @@
             </button>
           </div>
           <p class="hint">{{ $t('systems.uploadHint') }}</p>
-          <p v-if="uploadResult" class="upload-result">{{ uploadResult }}</p>
           <div class="rag-table-actions">
             <button type="button" class="btn-reindex" @click="triggerReindex" :disabled="reindexing">
               {{ reindexing ? $t('systems.running') : $t('systems.ragRun') }}
@@ -95,7 +94,6 @@
             </button>
           </div>
         </div>
-        <p v-if="formError" class="error">{{ formError }}</p>
         <div class="form-actions">
           <button type="button" class="btn-cancel" @click="closeForm">{{ $t('common.cancel') }}</button>
           <button type="submit" class="btn-save" :disabled="saving">{{ saving ? $t('common.saving') : $t('common.save') }}</button>
@@ -224,7 +222,6 @@ export default {
         allowed_origins: '',
         enabled: true
       },
-      formError: '',
       saving: false,
       deleteTarget: null,
       deleting: false,
@@ -234,7 +231,6 @@ export default {
       testChatUserId: '',
       uploadFile: null,
       uploading: false,
-      uploadResult: '',
       ragFiles: [],
       ragFilesLoading: false,
       deleteRagTarget: null,
@@ -277,7 +273,7 @@ export default {
         if (!r.ok) throw new Error(await r.text())
         this.systems = await r.json()
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       } finally {
         this.loading = false
       }
@@ -288,7 +284,6 @@ export default {
       return k.slice(0, 4) + '...' + k.slice(-4)
     },
     async openTestChat(s) {
-      this.formError = ''
       try {
         const r = await fetch(API + '/' + encodeURIComponent(s.system_id) + '/test-token', {
           headers: this.authHeaders()
@@ -308,11 +303,10 @@ export default {
         this.testChatUserId = 'admin_test'
         this.showTestChat = true
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       }
     },
     async downloadSampleZip() {
-      this.formError = ''
       try {
         const r = await fetch('/v1/admin/sample/download', { headers: this.authHeaders() })
         if (r.status === 401) {
@@ -329,7 +323,7 @@ export default {
         a.click()
         URL.revokeObjectURL(url)
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       }
     },
     async openSampleModal() {
@@ -352,7 +346,6 @@ export default {
     },
     async openForm(s) {
       this.editing = s || null
-      this.formError = ''
       if (s) {
         this.form = {
           system_id: s.system_id,
@@ -422,7 +415,6 @@ export default {
     async triggerReindexFromTable(s, incremental) {
       if (!s) return
       this.reindexingRow = s.system_id
-      this.formError = ''
       try {
         const r = await fetch(API + '/' + encodeURIComponent(s.system_id) + '/trigger-reindex?incremental=' + incremental, {
           method: 'POST',
@@ -438,9 +430,9 @@ export default {
           throw new Error(d.detail || 'Indexing failed')
         }
         const d = await r.json()
-        alert(`Job started: ${d.job_name || ''}`)
+        this.$toast.success(`Job started: ${d.job_name || ''}`)
       } catch (e) {
-        alert(e.message || 'Indexing failed')
+        this.$toast.error(e.message || 'Indexing failed')
       } finally {
         this.reindexingRow = null
       }
@@ -448,7 +440,6 @@ export default {
     async triggerReindex() {
       if (!this.editing) return
       this.reindexing = true
-      this.formError = ''
       try {
         const r = await fetch(API + '/' + encodeURIComponent(this.editing.system_id) + '/trigger-reindex?incremental=true', {
           method: 'POST',
@@ -464,17 +455,15 @@ export default {
           throw new Error(d.detail || 'Indexing failed')
         }
         const d = await r.json()
-        this.formError = ''
-        this.uploadResult = `Job started: ${d.job_name || ''}`
+        this.$toast.success(`Job started: ${d.job_name || ''}`)
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       } finally {
         this.reindexing = false
       }
     },
     async applySettings() {
       this.applyingSettings = true
-      this.formError = ''
       try {
         const r = await fetch(API + '/apply-settings', {
           method: 'POST',
@@ -491,7 +480,7 @@ export default {
         }
         window.location.reload()
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       } finally {
         this.applyingSettings = false
       }
@@ -513,7 +502,7 @@ export default {
         this.deleteRagTarget = null
         await this.loadRagFiles()
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       } finally {
         this.deletingRag = false
       }
@@ -521,12 +510,10 @@ export default {
     onFileSelect(e) {
       const f = e.target?.files?.[0]
       this.uploadFile = f || null
-      this.uploadResult = ''
     },
     async doUpload() {
       if (!this.editing || !this.uploadFile) return
       this.uploading = true
-      this.formError = ''
       this.uploadResult = ''
       try {
         const formData = new FormData()
@@ -546,18 +533,17 @@ export default {
           throw new Error(d.detail || 'Upload failed')
         }
         const d = await r.json()
-        this.uploadResult = `${d.count} file(s) uploaded: ${d.uploaded?.join(', ') || ''}`
+        this.$toast.success(`${d.count} file(s) uploaded: ${d.uploaded?.join(', ') || ''}`)
         this.uploadFile = null
         if (this.$refs.fileInput) this.$refs.fileInput.value = ''
         await this.loadRagFiles()
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       } finally {
         this.uploading = false
       }
     },
     async save() {
-      this.formError = ''
       this.saving = true
       try {
         if (this.editing) {
@@ -601,7 +587,7 @@ export default {
         this.closeForm()
         await this.load()
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       } finally {
         this.saving = false
       }
@@ -627,7 +613,7 @@ export default {
         this.deleteTarget = null
         await this.load()
       } catch (e) {
-        this.formError = e.message
+        this.$toast.error(e.message)
       } finally {
         this.deleting = false
       }
@@ -731,7 +717,6 @@ export default {
 .btn-do-upload { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
 .btn-do-upload:hover:not(:disabled) { background: rgba(99, 102, 241, 0.3); }
 .btn-do-upload:disabled { opacity: 0.6; cursor: not-allowed; }
-.upload-result { font-size: 0.85rem; color: #4ade80; margin-top: 0.5rem; }
 .hint { font-size: 0.8rem; color: #6b7280; margin-left: 0; margin-top: 0.25rem; display: block; }
 .dify-apps-link { color: var(--primary); text-decoration: none; }
 .dify-apps-link:hover { text-decoration: underline; }
@@ -741,7 +726,6 @@ export default {
 .btn-save { padding: 0.5rem 1rem; background: linear-gradient(to right, var(--primary), var(--secondary)); color: #fff; border: none; border-radius: 0.75rem; cursor: pointer; font-weight: 600; }
 .btn-save:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4); }
 .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
-.error { color: #f87171; font-size: 0.9rem; }
 .modal-chat { min-width: 600px; max-width: 95vw; width: 800px; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
 .modal-chat-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
 .modal-chat-header h3 { margin: 0; font-size: 1rem; color: #fff; }

@@ -27,7 +27,6 @@
             required
           >
         </div>
-        <p v-if="error" class="error-msg">{{ error }}</p>
         <button type="submit" class="btn-submit" :disabled="loading">
           {{ loading ? $t('auth.loggingIn') : $t('auth.loginButton') }}
         </button>
@@ -49,13 +48,11 @@ export default {
     return {
       username: '',
       password: '',
-      loading: false,
-      error: ''
+      loading: false
     }
   },
   methods: {
     async handleLogin() {
-      this.error = ''
       this.loading = true
       try {
         const r = await fetch('/v1/admin/login', {
@@ -76,7 +73,7 @@ export default {
         localStorage.setItem(TOKEN_KEY, token)
         this.$router.replace('/admin')
       } catch (e) {
-        this.error = e.message || this.$t('auth.loginError')
+        this.$toast.error(e.message || this.$t('auth.loginError'))
       } finally {
         this.loading = false
       }

@@ -31,7 +31,6 @@
             <div v-html="escapeHtml(m.content)"></div>
           </div>
         </div>
-        <div class="error">{{ error }}</div>
         <div class="input-row">
           <input
             type="text"
@@ -82,8 +81,7 @@ export default {
       conversations: [],
       currentConversationId: null,
       messages: [],
-      inputText: '',
-      error: ''
+      inputText: ''
     }
   },
   computed: {
@@ -152,7 +150,6 @@ export default {
     newConversation() {
       this.currentConversationId = null
       this.messages = []
-      this.error = ''
     },
     async loadConversations() {
       if (!this.init || this.init.embed) return
@@ -165,7 +162,7 @@ export default {
         this.conversations = await r.json()
       } catch (e) {
         console.error('[Chat] loadConversations failed:', e)
-        this.error = e.message || this.$t('chat.errorList')
+        if (this.$toast) this.$toast.error(e.message || this.$t('chat.errorList'))
       }
     },
     async deleteConversation(id) {
@@ -188,7 +185,7 @@ export default {
         await this.loadConversations()
       } catch (e) {
         console.error('[Chat] deleteConversation failed:', e)
-        this.error = e.message || this.$t('chat.errorDelete')
+        if (this.$toast) this.$toast.error(e.message || this.$t('chat.errorDelete'))
       }
     },
     async selectConversation(id) {
@@ -206,13 +203,12 @@ export default {
         this.messages = data.map(m => ({ role: m.role, content: m.content }))
       } catch (e) {
         console.error('[Chat] selectConversation failed:', e)
-        this.error = e.message || this.$t('chat.errorMessages')
+        if (this.$toast) this.$toast.error(e.message || this.$t('chat.errorMessages'))
       }
     },
     async sendMessage() {
       const text = this.inputText.trim()
       if (!text || !this.init) return
-      this.error = ''
       this.inputText = ''
       this.messages.push({ role: 'user', content: text })
       try {
@@ -238,7 +234,7 @@ export default {
         if (!this.init.embed) this.loadConversations()
       } catch (e) {
         console.error('[Chat] sendMessage failed:', e)
-        this.error = e.message || this.$t('chat.errorSend')
+        if (this.$toast) this.$toast.error(e.message || this.$t('chat.errorSend'))
       }
     }
   }

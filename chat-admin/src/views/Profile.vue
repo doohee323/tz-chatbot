@@ -38,8 +38,6 @@
               :placeholder="$t('common.email')"
             >
           </div>
-          <p v-if="profileError" class="error-msg">{{ profileError }}</p>
-          <p v-if="profileSuccess" class="success-msg">{{ profileSuccess }}</p>
           <button type="submit" class="btn-submit" :disabled="profileLoading">
             {{ profileLoading ? $t('common.saving') : $t('common.save') }}
           </button>
@@ -84,8 +82,6 @@
               minlength="6"
             >
           </div>
-          <p v-if="error" class="error-msg">{{ error }}</p>
-          <p v-if="success" class="success-msg">{{ success }}</p>
           <button type="submit" class="btn-submit" :disabled="loading">
             {{ loading ? $t('common.saving') : $t('profile.changePassword') }}
           </button>
@@ -105,16 +101,12 @@ export default {
       profile: null,
       profileForm: { name: '', email: '' },
       profileLoading: false,
-      profileError: '',
-      profileSuccess: '',
       passwordForm: {
         current_password: '',
         new_password: '',
         new_password_confirm: ''
       },
-      loading: false,
-      error: '',
-      success: ''
+      loading: false
     }
   },
   mounted() {
@@ -147,8 +139,6 @@ export default {
       }
     },
     async handleUpdateProfile() {
-      this.profileError = ''
-      this.profileSuccess = ''
       this.profileLoading = true
       try {
         const r = await fetch('/v1/admin/profile', {
@@ -169,22 +159,20 @@ export default {
         }
         this.profile = data
         this.profileForm = { name: data.name || '', email: data.email || '' }
-        this.profileSuccess = this.$t('profile.saveSuccess')
+        this.$toast.success(this.$t('profile.saveSuccess'))
       } catch (e) {
-        this.profileError = e.message || this.$t('profile.saveError')
+        this.$toast.error(e.message || this.$t('profile.saveError'))
       } finally {
         this.profileLoading = false
       }
     },
     async handleChangePassword() {
-      this.error = ''
-      this.success = ''
       if (this.passwordForm.new_password !== this.passwordForm.new_password_confirm) {
-        this.error = this.$t('profile.newPasswordMismatch')
+        this.$toast.error(this.$t('profile.newPasswordMismatch'))
         return
       }
       if (this.passwordForm.new_password.length < 6) {
-        this.error = this.$t('profile.newPasswordMinLength')
+        this.$toast.error(this.$t('profile.newPasswordMinLength'))
         return
       }
       this.loading = true
@@ -206,10 +194,10 @@ export default {
           const msg = Array.isArray(data.detail) ? data.detail.map(d => d.msg).join(', ') : (data.detail || this.$t('profile.passwordChangeError'))
           throw new Error(msg)
         }
-        this.success = this.$t('profile.passwordChanged')
+        this.$toast.success(this.$t('profile.passwordChanged'))
         this.passwordForm = { current_password: '', new_password: '', new_password_confirm: '' }
       } catch (e) {
-        this.error = e.message || this.$t('profile.passwordChangeError')
+        this.$toast.error(e.message || this.$t('profile.passwordChangeError'))
       } finally {
         this.loading = false
       }
