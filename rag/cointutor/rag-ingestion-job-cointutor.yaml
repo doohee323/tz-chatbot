@@ -18,7 +18,7 @@ spec:
         - /bin/sh
         - -c
         - |
-          pip install --no-cache-dir minio qdrant-client openai pypdf google-genai -q
+          pip install --no-cache-dir -r /config/requirements-ingest.txt -q
           python /config/ingest.py
         envFrom:
         - secretRef:

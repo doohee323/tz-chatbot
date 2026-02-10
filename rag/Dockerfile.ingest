@@ -1,0 +1,11 @@
+# Optional: Pre-built image for RAG ingestion (faster CronJob startup)
+# Build: docker build -f Dockerfile.ingest -t YOUR_REGISTRY/rag-ingest:latest .
+# Job/CronJob: use this image + volumeMount ConfigMap, override command to run python /config/ingest.py
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements-ingest.txt .
+RUN pip install --no-cache-dir -r requirements-ingest.txt
+
+# Script comes from ConfigMap at runtime (/config/ingest.py)
+ENTRYPOINT ["python", "/config/ingest.py"]

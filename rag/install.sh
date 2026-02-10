@@ -69,8 +69,11 @@ sed -e "s/k8s_project/${k8s_project}/g" -e "s/k8s_domain/${k8s_domain}/g" rag-in
 kubectl apply -f rag-ingress.yaml_bak -n "${NS}"
 
 echo "[7/7] Ingestion (ConfigMap + CronJob: cointutor, drillquiz)"
-if [[ -f "${SCRIPT_DIR}/scripts/ingest.py" ]]; then
-  kubectl create configmap rag-ingestion-script --from-file="${SCRIPT_DIR}/scripts/ingest.py" -n "${NS}" --dry-run=client -o yaml | kubectl apply -f -
+if [[ -f "${SCRIPT_DIR}/scripts/ingest.py" ]] && [[ -f "${SCRIPT_DIR}/requirements-ingest.txt" ]]; then
+  kubectl create configmap rag-ingestion-script \
+    --from-file=ingest.py="${SCRIPT_DIR}/scripts/ingest.py" \
+    --from-file=requirements-ingest.txt="${SCRIPT_DIR}/requirements-ingest.txt" \
+    -n "${NS}" --dry-run=client -o yaml | kubectl apply -f -
 fi
 kubectl apply -f cointutor/rag-ingestion-cronjob-cointutor.yaml -n "${NS}"
 kubectl apply -f drillquiz/rag-ingestion-cronjob-drillquiz.yaml -n "${NS}"

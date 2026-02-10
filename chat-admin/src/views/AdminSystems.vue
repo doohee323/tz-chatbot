@@ -188,6 +188,7 @@
             :chat-token="testChatToken"
             :chat-system-id="testChatSystemId"
             :chat-user-id="testChatUserId"
+            :chat-lang="$i18n.locale"
             in-modal
           />
         </div>
@@ -713,7 +714,7 @@ export default {
 .modal-chat-header h3 { margin: 0; font-size: 1rem; color: #fff; }
 .btn-close { padding: 0.5rem 1rem; background: rgba(100, 116, 139, 0.3); color: #fff; border: none; border-radius: 0.75rem; cursor: pointer; }
 .btn-close:hover { background: rgba(100, 116, 139, 0.5); }
-.modal-chat-body { flex: 1; min-height: 0; overflow: hidden; background: #fff; }
+.modal-chat-body { flex: 1; min-height: 0; overflow: hidden; background: #fff; display: flex; flex-direction: column; }
 .modal-sample { max-width: 700px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
 .modal-sample h3 { margin: 0 0 0.5rem; }
 .sample-hint { font-size: 0.85rem; color: #9ca3af; margin: 0 0 0.5rem; }

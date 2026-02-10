@@ -72,11 +72,12 @@ cd tz-chatbot/rag
 | `rag-ingestion-job.yaml` | (Legacy) one-off Job |
 | `rag-ingestion-secret.example.yaml` | Secret example (MinIO + OpenAI/Gemini key per cointutor/drillquiz) |
 | `reset-rag-collections.sh` | Reset Qdrant collections (cointutor \| drillquiz \| all) [reindex] |
-| `scripts/ingest.py` | Indexer script (install.sh uploads as ConfigMap) |
+| `scripts/ingest.py` | Indexer script (LangChain RecursiveCharacterTextSplitter) |
+| `requirements-ingest.txt` | Pip deps (install.sh uploads with ingest.py as ConfigMap) |
 
 ## Indexer: MinIO raw/ → chunking → embedding → Qdrant rag_docs
 
-**Flow**: PDF/txt under MinIO bucket `rag-docs` `raw/` → text extraction → chunking (500 chars, 50 overlap) → **embedding (OpenAI or Gemini)** → upsert into Qdrant collection `rag_docs`.
+**Flow**: PDF/txt under MinIO bucket `rag-docs` `raw/` → **LangChain Loader** (PyPDFLoader, TextLoader) → **Splitter** (RecursiveCharacterTextSplitter, 500 chars, 50 overlap) → **Embedding** (OpenAI/Gemini via LangChain) → upsert into Qdrant collection `rag_docs`.
 
 ### 1. Create Secrets (required, per topic)
 
@@ -149,10 +150,10 @@ Per-chunk payload: `doc_id`, `source`, `path`, `chunk_index`, `text`, `created_a
 
 | Step | Description |
 |------|-------------|
-| 1. ConfigMap | `install.sh` reads `scripts/ingest.py` and creates ConfigMap `rag-ingestion-script`. Key is filename `ingest.py`. |
+| 1. ConfigMap | `install.sh` reads `scripts/ingest.py` and `requirements-ingest.txt`, creates ConfigMap `rag-ingestion-script`. Keys: `ingest.py`, `requirements-ingest.txt`. |
 | 2. Pod volume | CronJob/Job `volumes[]` uses `configMap: name: rag-ingestion-script`; container mounts with `volumeMounts: mountPath: /config`. |
 | 3. Path in container | Script appears as **`/config/ingest.py`** inside the Pod. |
-| 4. Run | Container `command`: `pip install ... && python /config/ingest.py`. I.e. start from Python image then run the mounted script. |
+| 4. Run | Container `command`: `pip install -r /config/requirements-ingest.txt && python /config/ingest.py`. Starts from Python image, installs deps, then runs the mounted script. |
 | 5. Env | `envFrom: secretRef: rag-ingestion-secret-cointutor` or `-drillquiz` injects MinIO/OpenAI/Gemini keys; QDRANT_HOST, MINIO_ENDPOINT etc. come from CronJob/Job `env[]`. |
 
 - **CronJob**: At 02:00 daily the scheduler creates a Job → Pod starts → runs `ingest.py` as above.

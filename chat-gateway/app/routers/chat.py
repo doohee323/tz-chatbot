@@ -213,18 +213,31 @@ async def list_messages(
     api_key: str = Security(API_KEY_HEADER),
 ):
     ident = _resolve_identity(identity, None, api_key, system_id=system_id, user_id=user_id)
-    messages = await get_conversation_messages(
+    raw = await get_conversation_messages(
         conversation_id, ident.dify_user, system_id=ident.system_id
     )
-    return [
-        MessageItem(
-            id=m.get("id", ""),
-            role=m.get("role", "user"),
-            content=m.get("content") or (m.get("message") or ""),
-            created_at=m.get("created_at"),
-        )
-        for m in messages
-    ]
+    # Dify returns items with query/answer (not role/content). Expand each into user+assistant pairs.
+    result: list[MessageItem] = []
+    for m in raw:
+        mid = m.get("id", "")
+        created_at = m.get("created_at")
+        # Dify format: query = user message, answer = assistant response
+        if m.get("query") is not None:
+            result.append(
+                MessageItem(id=f"{mid}_user", role="user", content=m.get("query") or "", created_at=created_at)
+            )
+        if m.get("answer") is not None:
+            result.append(
+                MessageItem(id=f"{mid}_assistant", role="assistant", content=m.get("answer") or "", created_at=created_at)
+            )
+        # Fallback: role/content or message (non-Dify format)
+        if m.get("query") is None and m.get("answer") is None:
+            content = m.get("content") or m.get("message") or ""
+            if content:
+                result.append(
+                    MessageItem(id=mid, role=m.get("role", "user"), content=content, created_at=created_at)
+                )
+    return result
 
 
 @router.delete("/conversations/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)

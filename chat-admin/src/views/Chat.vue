@@ -74,6 +74,7 @@ export default {
     chatToken: { type: String, default: '' },
     chatSystemId: { type: String, default: '' },
     chatUserId: { type: String, default: '' },
+    chatLang: { type: String, default: '' },
     inModal: { type: Boolean, default: false }
   },
   data() {
@@ -87,7 +88,11 @@ export default {
   },
   computed: {
     lang() {
-      return resolveLangForApi(this.$i18n?.locale)
+      // Prefer: URL param (init.lang) > prop (chatLang) > i18n locale > browser
+      const fromUrl = this.init?.lang
+      const fromProp = this.chatLang
+      const fromI18n = this.$i18n?.locale
+      return resolveLangForApi(fromUrl || fromProp || fromI18n)
     },
     init() {
       if (this.chatToken && this.chatSystemId && this.chatUserId) {
@@ -258,10 +263,15 @@ export default {
 }
 .chat-page--modal {
   height: 100%;
-  min-height: 400px;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .chat-page--modal .layout {
-  height: calc(100% - 40px);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 .layout--embed {
   height: 100vh;
@@ -345,14 +355,15 @@ export default {
 .conv-list li.active { background: #dbeafe; font-weight: 500; }
 .main {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #fff;
   min-width: 0;
-  min-height: 0;
 }
 .messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 1rem;
   display: flex;

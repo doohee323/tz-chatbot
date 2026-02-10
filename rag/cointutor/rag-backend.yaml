@@ -13,7 +13,8 @@ data:
     from pydantic import BaseModel
     import os
     import uvicorn
-    from qdrant_client import QdrantClient
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    from langchain_qdrant import QdrantVectorStore
     from slowapi import Limiter, _rate_limit_exceeded_handler
     from slowapi.util import get_remote_address
     from slowapi.errors import RateLimitExceeded
@@ -27,27 +28,23 @@ data:
     COLLECTION = os.environ.get("QDRANT_COLLECTION", "rag_docs")
     GEMINI_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     EMBED_MODEL = os.environ.get("EMBEDDING_MODEL", "gemini-embedding-001")
+    QDRANT_URL = f"http://{QDRANT_HOST}:{QDRANT_PORT}"
 
-    def get_qdrant():
-        return QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, check_compatibility=False)
-
-    def embed_query(text: str) -> list[float]:
+    def get_vector_store(collection_name: str):
         if not GEMINI_KEY:
             raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY required")
-        from google import genai
-        from google.genai import types
-        client = genai.Client(api_key=GEMINI_KEY)
-        result = client.models.embed_content(
+        embeddings = GoogleGenerativeAIEmbeddings(
             model=EMBED_MODEL,
-            contents=text,
-            config=types.EmbedContentConfig(
-                task_type="RETRIEVAL_QUERY",
-                output_dimensionality=1536,
-            ),
+            google_api_key=GEMINI_KEY,
+            task_type="retrieval_query",
+            output_dimensionality=1536,
         )
-        e = result.embeddings[0]
-        v = getattr(e, "values", e)
-        return list(v) if not isinstance(v, list) else v
+        return QdrantVectorStore.from_existing_collection(
+            embedding=embeddings,
+            url=QDRANT_URL,
+            collection_name=collection_name,
+            prefer_grpc=False,
+        )
 
     class QueryRequest(BaseModel):
         question: str
@@ -66,27 +63,19 @@ data:
             coll = (req.collection or "").strip() or COLLECTION
             if coll == "rag_docs":
                 coll = "rag_docs_cointutor"
-            query_vector = embed_query(question) if question else []
-            if not query_vector:
+            if not question:
                 body = {"question": question, "results": []}
                 return JSONResponse(content=body, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
-            client = get_qdrant()
-            response = client.query_points(
-                collection_name=coll,
-                query=query_vector,
-                limit=req.top_k,
-            )
-            points = getattr(response, "points", None) or getattr(response, "result", None) or []
-            if points is None:
-                points = []
+            vs = get_vector_store(coll)
+            docs_with_scores = vs.similarity_search_with_score(question, k=req.top_k)
             results = [
                 {
-                    "text": (getattr(p, "payload", None) or {}).get("text", ""),
-                    "source": (getattr(p, "payload", None) or {}).get("source", ""),
-                    "path": (getattr(p, "payload", None) or {}).get("path", ""),
-                    "score": getattr(p, "score", None),
+                    "text": doc.page_content,
+                    "source": doc.metadata.get("source", ""),
+                    "path": doc.metadata.get("path", ""),
+                    "score": float(score) if score is not None else None,
                 }
-                for p in points
+                for doc, score in docs_with_scores
             ]
             body = {"question": question, "results": results}
             return JSONResponse(
@@ -122,7 +111,7 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
         - |
-          pip install --no-cache-dir fastapi uvicorn qdrant-client google-genai slowapi 2>/dev/null
+          pip install --no-cache-dir fastapi uvicorn langchain-qdrant langchain-google-genai slowapi 2>/dev/null
           cp /config/main.py /tmp/main.py && exec python /tmp/main.py
         envFrom:
         - secretRef:
