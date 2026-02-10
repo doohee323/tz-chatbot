@@ -28,7 +28,7 @@
             :class="['msg', 'msg-' + m.role]"
           >
             <div class="msg-role">{{ m.role === 'user' ? $t('chat.me') : $t('chat.bot') }}</div>
-            <div v-html="escapeHtml(m.content)"></div>
+            <div v-html="renderMarkdown(m.content)" class="msg-content"></div>
           </div>
         </div>
         <div class="input-row">
@@ -52,6 +52,8 @@
 
 <script>
 import { chatApiBase } from '../config/apiConfig'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 const ALLOWED_LANGS = ['en', 'es', 'ko', 'zh', 'ja']
 
@@ -141,11 +143,10 @@ export default {
         'Content-Type': 'application/json'
       }
     },
-    escapeHtml(s) {
+    renderMarkdown(s) {
       if (s == null) return ''
-      const div = document.createElement('div')
-      div.textContent = s
-      return div.innerHTML
+      const html = marked.parse(String(s))
+      return DOMPurify.sanitize(html)
     },
     newConversation() {
       this.currentConversationId = null
@@ -376,6 +377,12 @@ export default {
 .msg-user { align-self: flex-end; background: #2563eb; color: #fff; }
 .msg-assistant { align-self: flex-start; background: #f3f4f6; color: #111; }
 .msg-role { font-size: 0.75rem; opacity: 0.8; margin-bottom: 0.2rem; }
+.msg-content { white-space: normal; }
+.msg-content ul, .msg-content ol { margin: 0.4rem 0; padding-left: 1.25rem; }
+.msg-content li { margin: 0.2rem 0; }
+.msg-content p { margin: 0.4rem 0; }
+.msg-content p:first-child { margin-top: 0; }
+.msg-content p:last-child { margin-bottom: 0; }
 .input-row {
   padding: 0.75rem 1rem;
   border-top: 1px solid #e5e7eb;
