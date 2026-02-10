@@ -116,6 +116,8 @@ export default {
     upload: 'Upload',
     uploadHint: 'PDF, TXT, MD or ZIP',
     ragRun: 'RAG Run',
+    ragFull: 'Full',
+    ragIncr: 'Incr',
     running: 'Running...',
     manage: 'Manage',
     noSystems: 'No systems. Click Add to register.',

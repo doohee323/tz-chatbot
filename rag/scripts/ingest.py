@@ -4,12 +4,15 @@ RAG indexer: MinIO raw/ -> LangChain Loader/Splitter/Embedding/VectorStore -> Qd
 - Loader: PyPDFLoader, TextLoader (langchain_community)
 - Splitter: RecursiveCharacterTextSplitter (langchain_text_splitters)
 - Embedding: OpenAIEmbeddings, GoogleGenerativeAIEmbeddings (langchain-openai, langchain-google-genai)
-- VectorStore: QdrantVectorStore (langchain-qdrant), payload: page_content, metadata{source, path, ...}
+- VectorStore: QdrantVectorStore (langchain-qdrant), payload: page_content, metadata{source, path, doc_id, ...}
+
+Incremental: Only re-index new/changed files, delete vectors for removed files.
+  Set INCREMENTAL=false for full sync (delete collection, rebuild all).
 
 env: EMBEDDING_PROVIDER=openai|gemini,
      OpenAI: OPENAI_API_KEY, EMBEDDING_MODEL
      Gemini: GEMINI_API_KEY (or GOOGLE_API_KEY), EMBEDDING_MODEL=gemini-embedding-001
-     Common: MINIO_*, QDRANT_*, CHUNK_SIZE, CHUNK_OVERLAP
+     Common: MINIO_*, QDRANT_*, CHUNK_SIZE, CHUNK_OVERLAP, INCREMENTAL
 """
 import os
 import sys
@@ -22,6 +25,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_qdrant import QdrantVectorStore
 from minio import Minio
 from qdrant_client import QdrantClient
+from qdrant_client.http import models as qmodels
 
 
 def get_env(name: str, default: str = "") -> str:
@@ -63,11 +67,57 @@ def load_document(data: bytes, key: str, temp_dir: str) -> list[Document]:
             pass
 
 
+def get_existing_doc_states(qdrant_client: QdrantClient, collection: str) -> dict[str, str]:
+    """Scroll Qdrant to get doc_id -> created_at (last_modified) for incremental comparison."""
+    result: dict[str, str] = {}
+    offset = None
+    limit = 100
+    while True:
+        points, offset = qdrant_client.scroll(
+            collection_name=collection,
+            scroll_filter=None,
+            limit=limit,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for pt in points or []:
+            payload = getattr(pt, "payload", None) or {}
+            meta = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else payload
+            doc_id = (meta or {}).get("doc_id")
+            created = (meta or {}).get("created_at", "")
+            if doc_id:
+                result[doc_id] = created
+        if offset is None:
+            break
+    return result
+
+
+def delete_points_by_doc_id(qdrant_client: QdrantClient, collection: str, doc_id: str) -> None:
+    """Delete all points with payload.metadata.doc_id == doc_id."""
+    qdrant_client.delete(
+        collection_name=collection,
+        points_selector=qmodels.FilterSelector(
+            filter=qmodels.Filter(
+                must=[
+                    qmodels.FieldCondition(
+                        key="metadata.doc_id",
+                        match=qmodels.MatchValue(value=doc_id),
+                    ),
+                ],
+            ),
+        ),
+    )
+
+
 def main():
     provider = get_env("EMBEDDING_PROVIDER", "openai").lower()
     if provider not in ("openai", "gemini"):
         print(f"EMBEDDING_PROVIDER must be openai or gemini, got: {provider}", file=sys.stderr)
         sys.exit(1)
+
+    incremental = get_env("INCREMENTAL", "true").lower() in ("true", "1", "yes")
+    print(f"Mode: {'incremental' if incremental else 'full sync'}")
 
     endpoint = get_env("MINIO_ENDPOINT", "minio.devops.svc.cluster.local")
     port = int(get_env("MINIO_PORT", "9000"))
@@ -127,23 +177,82 @@ def main():
         minio_client.make_bucket(bucket)
         print(f"Created bucket {bucket}.")
 
-    try:
-        qdrant_client.delete_collection(collection_name=collection)
-        print(f"Deleted collection {collection}.")
-    except Exception as e:
-        print(f"Delete collection (may not exist): {e}")
-
     objects = list(minio_client.list_objects(bucket, prefix=prefix, recursive=True))
+    objects = [o for o in objects if not (o.object_name or "").endswith("/")]
+
     if not objects:
-        print(f"No objects under {bucket}/{prefix}. Collection is empty. Upload PDF/txt then re-run.")
+        if incremental:
+            try:
+                existing = get_existing_doc_states(qdrant_client, collection)
+                for doc_id in existing:
+                    delete_points_by_doc_id(qdrant_client, collection, doc_id)
+                    print(f"  Deleted doc_id={doc_id} (file removed from MinIO)")
+            except Exception as e:
+                print(f"Collection may not exist: {e}")
+            print("No objects under prefix. Cleared removed docs. Done.")
+        else:
+            try:
+                qdrant_client.delete_collection(collection_name=collection)
+                print(f"Deleted collection {collection}.")
+            except Exception:
+                pass
+            print("No objects under prefix. Collection empty. Done.")
         sys.exit(0)
 
-    all_chunk_docs: list[Document] = []
+    # Current MinIO state: path -> (doc_id, last_modified)
+    current: dict[str, tuple[str, str]] = {}
+    for obj in objects:
+        key = obj.object_name
+        base_id = hashlib.sha256(key.encode()).hexdigest()[:16]
+        last_modified = obj.last_modified.isoformat() if obj.last_modified else ""
+        current[key] = (base_id, last_modified)
+
+    collection_exists = False
+    try:
+        qdrant_client.get_collection(collection_name=collection)
+        collection_exists = True
+    except Exception:
+        pass
+
+    if not incremental or not collection_exists:
+        # Full sync
+        try:
+            qdrant_client.delete_collection(collection_name=collection)
+            print("Deleted collection (full sync).")
+        except Exception:
+            pass
+        qdrant_client.create_collection(
+            collection_name=collection,
+            vectors_config=qmodels.VectorParams(size=1536, distance=qmodels.Distance.COSINE),
+        )
+        print("Created collection.")
+        existing_doc_states: dict[str, str] = {}
+    else:
+        existing_doc_states = get_existing_doc_states(qdrant_client, collection)
+        # Delete docs removed from MinIO
+        current_doc_ids = {v[0] for v in current.values()}
+        for doc_id in list(existing_doc_states.keys()):
+            if doc_id not in current_doc_ids:
+                delete_points_by_doc_id(qdrant_client, collection, doc_id)
+                print(f"  Deleted doc_id={doc_id} (file removed)")
+                del existing_doc_states[doc_id]
+
+    vector_store = QdrantVectorStore.from_existing_collection(
+        embedding=embeddings,
+        url=qdrant_url,
+        collection_name=collection,
+        prefer_grpc=False,
+    )
+
     with tempfile.TemporaryDirectory() as temp_dir:
         for obj in objects:
             key = obj.object_name
-            if key.endswith("/"):
-                continue
+            base_id, last_modified = current[key]
+            if incremental and base_id in existing_doc_states:
+                if existing_doc_states[base_id] == last_modified:
+                    print(f"  {key}: skip (unchanged)")
+                    continue
+
             data = minio_client.get_object(bucket, key).read()
             docs = load_document(data, key, temp_dir)
             if not docs:
@@ -157,8 +266,9 @@ def main():
             if not chunk_docs:
                 continue
 
-            base_id = hashlib.sha256(key.encode()).hexdigest()[:16]
-            last_modified = obj.last_modified.isoformat() if obj.last_modified else ""
+            if incremental and collection_exists:
+                delete_points_by_doc_id(qdrant_client, collection, base_id)
+
             for i, doc in enumerate(chunk_docs):
                 doc.metadata = {
                     "doc_id": base_id,
@@ -167,20 +277,11 @@ def main():
                     "chunk_index": i,
                     "created_at": last_modified,
                 }
-                all_chunk_docs.append(doc)
-            print(f"  {key}: {len(chunk_docs)} chunks")
 
-    if not all_chunk_docs:
-        print("No documents to index.")
-        sys.exit(0)
+            vector_store.add_documents(chunk_docs)
+            action = "updated" if base_id in (existing_doc_states or {}) else "added"
+            print(f"  {key}: {len(chunk_docs)} chunks ({action})")
 
-    vector_store = QdrantVectorStore.from_documents(
-        all_chunk_docs,
-        embeddings,
-        url=qdrant_url,
-        collection_name=collection,
-        prefer_grpc=False,
-    )
     info = qdrant_client.get_collection(collection)
     print(f"Done. {collection} points_count={info.points_count}")
 

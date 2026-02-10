@@ -76,7 +76,9 @@ if [[ -f "${SCRIPT_DIR}/scripts/ingest.py" ]] && [[ -f "${SCRIPT_DIR}/requiremen
     -n "${NS}" --dry-run=client -o yaml | kubectl apply -f -
 fi
 kubectl apply -f cointutor/rag-ingestion-cronjob-cointutor.yaml -n "${NS}"
+kubectl apply -f cointutor/rag-ingestion-cronjob-cointutor-full.yaml -n "${NS}"
 kubectl apply -f drillquiz/rag-ingestion-cronjob-drillquiz.yaml -n "${NS}"
+kubectl apply -f drillquiz/rag-ingestion-cronjob-drillquiz-full.yaml -n "${NS}"
 
 echo ""
 echo "=== RAG stack install complete ==="

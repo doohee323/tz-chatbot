@@ -400,15 +400,17 @@ async def delete_file(
 @router.post("/{system_id}/trigger-reindex", response_model=dict)
 async def trigger_reindex(
     system_id: str,
+    incremental: bool = True,
     db: AsyncSession = Depends(get_db),
     admin_username: str = Depends(get_admin_required),
 ):
-    """Trigger RAG ingestion Job. Admin can only trigger for systems they created."""
+    """Trigger RAG ingestion Job. incremental=False → full sync (delete+recreate collection).
+    Admin can only trigger for systems they created."""
     sid = system_id.strip().lower()
     result = await db.execute(select(ChatSystem).where(ChatSystem.system_id == sid))
     _require_system_owner(result.scalar_one_or_none(), admin_username)
     job_name = f"ingest-{sid}-{int(time.time())}"
-    cronjob_name = f"rag-ingestion-cronjob-{sid}"
+    cronjob_name = f"rag-ingestion-cronjob-{sid}-full" if not incremental else f"rag-ingestion-cronjob-{sid}"
     namespace = "rag"
     env = os.environ.copy()
     try:

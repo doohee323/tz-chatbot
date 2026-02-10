@@ -116,6 +116,8 @@ export default {
     upload: '업로드',
     uploadHint: 'PDF, TXT, MD 또는 ZIP (압축 해제 후 업로드)',
     ragRun: 'RAG 실행',
+    ragFull: '전체',
+    ragIncr: '증분',
     running: '실행 중...',
     manage: '관리',
     noSystems: "등록된 시스템이 없습니다. '추가' 버튼으로 등록하세요.",

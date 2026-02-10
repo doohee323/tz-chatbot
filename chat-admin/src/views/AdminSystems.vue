@@ -128,6 +128,8 @@
               <button class="btn-test" @click="openTestChat(s)">{{ $t('common.test') }}</button>
               <button class="btn-edit" @click="openForm(s)">{{ $t('common.edit') }}</button>
               <button class="btn-del" @click="confirmDelete(s)">{{ $t('common.delete') }}</button>
+              <button class="btn-full" @click="triggerReindexFromTable(s, false)" :disabled="reindexingRow === s.system_id">{{ reindexingRow === s.system_id ? $t('systems.running') : $t('systems.ragFull') }}</button>
+              <button class="btn-incr" @click="triggerReindexFromTable(s, true)" :disabled="reindexingRow === s.system_id">{{ reindexingRow === s.system_id ? $t('systems.running') : $t('systems.ragIncr') }}</button>
             </td>
           </tr>
         </tbody>
@@ -238,6 +240,7 @@ export default {
       deleteRagTarget: null,
       deletingRag: false,
       reindexing: false,
+      reindexingRow: null,
       applyingSettings: false,
       showSampleModal: false,
       sampleYaml: ''
@@ -416,12 +419,38 @@ export default {
       this.deleteRagTarget = f
       this.deletingRag = false
     },
+    async triggerReindexFromTable(s, incremental) {
+      if (!s) return
+      this.reindexingRow = s.system_id
+      this.formError = ''
+      try {
+        const r = await fetch(API + '/' + encodeURIComponent(s.system_id) + '/trigger-reindex?incremental=' + incremental, {
+          method: 'POST',
+          headers: this.authHeaders()
+        })
+        if (r.status === 401) {
+          localStorage.removeItem(TOKEN_KEY)
+          this.$router.replace('/login')
+          return
+        }
+        if (!r.ok) {
+          const d = await r.json().catch(() => ({}))
+          throw new Error(d.detail || 'Indexing failed')
+        }
+        const d = await r.json()
+        alert(`Job started: ${d.job_name || ''}`)
+      } catch (e) {
+        alert(e.message || 'Indexing failed')
+      } finally {
+        this.reindexingRow = null
+      }
+    },
     async triggerReindex() {
       if (!this.editing) return
       this.reindexing = true
       this.formError = ''
       try {
-        const r = await fetch(API + '/' + encodeURIComponent(this.editing.system_id) + '/trigger-reindex', {
+        const r = await fetch(API + '/' + encodeURIComponent(this.editing.system_id) + '/trigger-reindex?incremental=true', {
           method: 'POST',
           headers: this.authHeaders()
         })
@@ -643,8 +672,12 @@ export default {
 .btn-test:hover { background: rgba(99, 102, 241, 0.3); }
 .btn-edit { padding: 0.25rem 0.5rem; background: rgba(139, 92, 246, 0.2); color: var(--secondary); border: none; border-radius: 0.5rem; cursor: pointer; margin-right: 0.25rem; font-size: 0.875rem; font-weight: 500; }
 .btn-edit:hover { background: rgba(139, 92, 246, 0.3); }
-.btn-del { padding: 0.25rem 0.5rem; background: rgba(239, 68, 68, 0.2); color: #f87171; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+.btn-del { padding: 0.25rem 0.5rem; background: rgba(239, 68, 68, 0.2); color: #f87171; border: none; border-radius: 0.5rem; cursor: pointer; margin-right: 0.25rem; font-size: 0.875rem; font-weight: 500; }
 .btn-del:hover { background: rgba(239, 68, 68, 0.3); }
+.btn-full { padding: 0.25rem 0.5rem; background: rgba(34, 197, 94, 0.2); color: #22c55e; border: none; border-radius: 0.5rem; cursor: pointer; margin-right: 0.25rem; font-size: 0.875rem; font-weight: 500; }
+.btn-full:hover { background: rgba(34, 197, 94, 0.3); }
+.btn-incr { padding: 0.25rem 0.5rem; background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+.btn-incr:hover { background: rgba(59, 130, 246, 0.3); }
 .empty { color: #9ca3af; padding: 2rem; text-align: center; }
 .form-page { max-width: 56rem; }
 .form-page .form-card { background: linear-gradient(to bottom right, var(--dark-light), var(--dark)); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }

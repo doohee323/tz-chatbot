@@ -47,7 +47,7 @@ if [[ -f rag-ingress.yaml ]]; then
 fi
 
 echo "[5/9] Delete RAG CronJob / Job"
-kubectl delete cronjob rag-ingestion-cronjob-cointutor rag-ingestion-cronjob-drillquiz -n "${NS}" --ignore-not-found=true 2>/dev/null || true
+kubectl delete cronjob rag-ingestion-cronjob-cointutor rag-ingestion-cronjob-cointutor-full rag-ingestion-cronjob-drillquiz rag-ingestion-cronjob-drillquiz-full -n "${NS}" --ignore-not-found=true 2>/dev/null || true
 kubectl delete cronjob rag-ingestion -n "${NS}" --ignore-not-found=true 2>/dev/null || true
 kubectl delete job rag-ingestion-job-cointutor rag-ingestion-job-drillquiz rag-ingestion-run qdrant-collection-init -n "${NS}" --ignore-not-found=true 2>/dev/null || true
 

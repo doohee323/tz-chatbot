@@ -51,6 +51,8 @@ spec:
               value: "500"
             - name: CHUNK_OVERLAP
               value: "50"
+            - name: INCREMENTAL
+              value: "true"
             volumeMounts:
             - name: script
               mountPath: /config
