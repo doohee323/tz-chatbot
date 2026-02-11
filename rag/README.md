@@ -142,11 +142,15 @@ kubectl apply -f drillquiz/rag-ingestion-job-drillquiz.yaml -n rag
 
 CronJob `rag-ingestion` runs the same indexer script daily at 02:00. It works as-is if Secrets exist.
 
-### 5. Payload (Qdrant)
+### 5. Incremental indexing
+
+`INCREMENTAL=true` (default): Only re-index new/changed files (based on `doc_id` + `created_at`), delete vectors for removed files. Set `INCREMENTAL=false` for full sync.
+
+### 6. Payload (Qdrant)
 
 Per-chunk payload: `doc_id`, `source`, `path`, `chunk_index`, `text`, `created_at` — used for RAG source and filtering.
 
-### 6. How ingest.py runs inside K8s
+### 7. How ingest.py runs inside K8s
 
 | Step | Description |
 |------|-------------|

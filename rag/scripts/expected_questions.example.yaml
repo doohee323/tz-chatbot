@@ -1,0 +1,21 @@
+# RAG 품질 평가용 기대 질문 세트 (예시)
+# 복사 후 expected_questions.yaml 로 저장하고, 질문/ground_truth를 도메인에 맞게 수정하세요.
+# batch_eval_rag.py 가 이 파일을 읽어 /query 를 호출하고 로그를 생성합니다.
+
+questions:
+  - id: "q1"
+    question: "환불은 며칠 안에 가능한가?"
+    ground_truth: "7일 이내"
+    keywords: ["7일", "환불"]
+
+  - id: "q2"
+    question: "배송비는 누가 부담하나?"
+    ground_truth: "고객 부담"
+    keywords: ["고객", "배송비"]
+
+  - id: "q3"
+    question: "주문 취소는 어떻게 하나요?"
+    ground_truth: ""
+    keywords: ["취소", "주문"]
+
+  # 추가: 10~30개 정도의 대표 질문을 넣으면 평가·튜닝에 유리합니다.

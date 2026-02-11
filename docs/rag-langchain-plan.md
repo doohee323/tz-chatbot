@@ -37,10 +37,9 @@
 
 **주의**: VectorStore 적용 후 기존 컬렉션은 재인덱싱 필요. Job 실행으로 다시 인덱싱 후 백엔드 사용.
 
-### 3.2 Phase 2 (향후)
+### 3.2 Phase 2 (적용 완료)
 
-- 문서 로더: MinIO → LangChain S3-style loader (선택)
-- 증분 인덱싱: doc_id/metadata 기반 변경 감지, 삭제된 문서 벡터 제거
+- 증분 인덱싱: doc_id + created_at 기반 변경 감지. 변경/삭제된 문서만 갱신. `INCREMENTAL=true` (기본)
 - 하이브리드 검색: BM25 + 벡터 재랭킹
 
 ---

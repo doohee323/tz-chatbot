@@ -13,7 +13,10 @@ data:
     from fastapi.responses import JSONResponse
     from pydantic import BaseModel
     import os
+    import time
+    import json
     import uvicorn
+    from datetime import datetime, timezone
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
     from langchain_qdrant import QdrantVectorStore
     from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -56,9 +59,15 @@ data:
     def health():
         return {"status": "ok"}
 
+    def _chunk_id(doc) -> str:
+        doc_id = doc.metadata.get("doc_id") or ""
+        idx = doc.metadata.get("chunk_index", 0)
+        return f"{doc_id}_chunk_{idx}" if doc_id else f"chunk_{idx}"
+
     @app.post("/query")
     @limiter.limit(os.environ.get("RATE_LIMIT_QUERY", "20/minute"))
     def query(req: QueryRequest, request: Request):
+        t0 = time.perf_counter()
         try:
             question = (req.question or "").strip() or ""
             coll = (req.collection or "").strip() or COLLECTION
@@ -67,16 +76,29 @@ data:
                 return JSONResponse(content=body, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
             vs = get_vector_store(coll)
             docs_with_scores = vs.similarity_search_with_score(question, k=req.top_k)
-            results = [
-                {
+            results = []
+            for i, (doc, score) in enumerate(docs_with_scores):
+                cid = _chunk_id(doc)
+                results.append({
+                    "chunk_id": cid,
                     "text": doc.page_content,
                     "source": doc.metadata.get("source", ""),
                     "path": doc.metadata.get("path", ""),
                     "score": float(score) if score is not None else None,
-                }
-                for doc, score in docs_with_scores
-            ]
+                })
             body = {"question": question, "results": results}
+            latency_ms = round((time.perf_counter() - t0) * 1000)
+            if os.environ.get("RAG_QUALITY_LOG", "").strip() in ("1", "true", "yes"):
+                log_row = {
+                    "log_type": "rag_query",
+                    "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "question": question,
+                    "retrieved": [{"chunk_id": r["chunk_id"], "score": r["score"], "content": (r["text"] or "")[:500], "source_path": r.get("path") or r.get("source") or ""} for r in results],
+                    "top_k": req.top_k,
+                    "collection": coll,
+                    "latency_ms": latency_ms,
+                }
+                print(json.dumps(log_row, ensure_ascii=False))
             return JSONResponse(
                 content=body,
                 headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
