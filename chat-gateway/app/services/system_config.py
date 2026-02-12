@@ -80,12 +80,10 @@ def get_dify_api_key(system_id: str | None) -> str:
 
 
 def get_valid_chat_token_api_keys() -> list[str]:
-    """API keys accepted for GET /v1/chat-token: DB chat_systems.dify_chatbot_token only when cache has data; else env CHAT_GATEWAY_API_KEY."""
-    if _systems_cache:
-        keys = []
-        for s in _systems_cache:
-            token = (s.get("dify_chatbot_token") or "").strip()
-            if token and token not in keys:
-                keys.append(token)
-        return keys
-    return list(get_settings().api_keys_list)
+    """API keys accepted for GET /v1/chat-token: env CHAT_GATEWAY_API_KEY + DB chat_systems.dify_chatbot_token (both accepted)."""
+    keys = list(get_settings().api_keys_list)
+    for s in _systems_cache:
+        token = (s.get("dify_chatbot_token") or "").strip()
+        if token and token not in keys:
+            keys.append(token)
+    return keys

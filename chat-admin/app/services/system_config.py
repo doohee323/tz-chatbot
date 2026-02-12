@@ -63,7 +63,7 @@ def get_dify_api_key(system_id: str | None) -> str:
 
 
 def get_api_keys_list() -> list[str]:
-    """All valid API keys. From .env only (CHAT_GATEWAY_API_KEYS) - shared across systems."""
+    """All valid API keys. From .env only (CHAT_GATEWAY_API_KEY) - shared across systems."""
     return get_settings().api_keys_list
 
 

@@ -1,16 +1,15 @@
 app:
   description: CoinTutor Service Supporter
-  icon: 🤖
-  icon_background: '#FFEAD5'
+  icon: 📚
+  icon_background: '#E0F2FE'
   mode: advanced-chat
   name: CoinTutor
   use_icon_as_answer_icon: false
-# OpenAI dependency: avoids check-dependencies 400 on import. After import, change each node model to Google (Gemini) in the UI.
 dependencies:
 - current_identifier: null
   type: marketplace
   value:
-    marketplace_plugin_unique_identifier: langgenius/openai:0.2.8@aae2be0913b8c6f0b80cff58e08d7a8b4c214569b41778413fcaea204561ff16
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.7.4@5faf411e694e0da130a337347a625a3812b1b7502a0183382d66d92c841bf05a
     version: null
 kind: app
 version: 0.5.0
@@ -67,77 +66,40 @@ workflow:
   graph:
     edges:
     - data:
-        sourceType: start
-        targetType: question-classifier
-      id: 1711528708197-1711528709608
-      source: '1711528708197'
-      sourceHandle: source
-      target: '1711528709608'
-      targetHandle: target
-      type: custom
-    - data:
-        sourceType: question-classifier
-        targetType: knowledge-retrieval
-      id: 1711528709608-1711528768556
-      source: '1711528709608'
-      sourceHandle: '1711528736036'
-      target: '1711528768556'
-      targetHandle: target
-      type: custom
-    - data:
-        sourceType: question-classifier
-        targetType: knowledge-retrieval
-      id: 1711528709608-1711528770201
-      source: '1711528709608'
-      sourceHandle: '1711528736549'
-      target: '1711528770201'
-      targetHandle: target
-      type: custom
-    - data:
-        sourceType: question-classifier
-        targetType: answer
-      id: 1711528709608-1711528775142
-      source: '1711528709608'
-      sourceHandle: '1711528737066'
-      target: '1711528775142'
-      targetHandle: target
-      type: custom
-    - data:
-        sourceType: knowledge-retrieval
-        targetType: llm
-      id: 1711528768556-1711528802931
-      source: '1711528768556'
-      sourceHandle: source
-      target: '1711528802931'
-      targetHandle: target
-      type: custom
-    - data:
-        sourceType: knowledge-retrieval
-        targetType: llm
-      id: 1711528770201-1711528815414
-      source: '1711528770201'
-      sourceHandle: source
-      target: '1711528815414'
-      targetHandle: target
-      type: custom
-    - data:
         sourceType: llm
         targetType: answer
       id: 1711528802931-1711528833796
+      selected: false
       source: '1711528802931'
       sourceHandle: source
       target: '1711528833796'
       targetHandle: target
       type: custom
     - data:
-        sourceType: llm
-        targetType: answer
-      id: 1711528815414-1711528835179
-      source: '1711528815414'
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: 1711528708197--1770181014076-target
+      selected: false
+      source: '1711528708197'
       sourceHandle: source
-      target: '1711528835179'
+      target: '1770181014076'
       targetHandle: target
       type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: llm
+      id: 1770181014076-source-1711528802931-target
+      selected: false
+      source: '1770181014076'
+      sourceHandle: source
+      target: '1711528802931'
+      targetHandle: target
+      type: custom
+      zIndex: 0
     nodes:
     - data:
         desc: Define the initial parameters for launching a workflow
@@ -155,136 +117,11 @@ workflow:
       height: 117
       id: '1711528708197'
       position:
-        x: 79.5
-        y: 714.5
+        x: 4.096783147582869
+        y: 624.796173054883
       positionAbsolute:
-        x: 79.5
-        y: 714.5
-      selected: false
-      sourcePosition: right
-      targetPosition: left
-      type: custom
-      width: 242
-    - data:
-        classes:
-        - id: '1711528736036'
-          name: Question related to after sales
-        - id: '1711528736549'
-          name: Questions about how to use products
-        - id: '1711528737066'
-          name: Other questions
-        desc: 'Define the classification conditions of user questions, LLM can define
-          how the conversation progresses based on the classification description. '
-        instructions: ''
-        model:
-          completion_params:
-            frequency_penalty: 0
-            max_tokens: 512
-            presence_penalty: 0
-            temperature: 0.7
-            top_p: 1
-          mode: chat
-          name: gemini-2.5-flash
-          provider: google
-        query_variable_selector:
-        - '1711528708197'
-        - sys.query
-        selected: false
-        title: Question Classifier
-        topics: []
-        type: question-classifier
-      height: 290
-      id: '1711528709608'
-      position:
-        x: 362.5
-        y: 714.5
-      positionAbsolute:
-        x: 362.5
-        y: 714.5
-      selected: false
-      sourcePosition: right
-      targetPosition: left
-      type: custom
-      width: 242
-    - data:
-        dataset_ids:
-        - G2NIW1z3sbyrnr0SjhTYlTPluIhjkJN1gBCRXM5n7zKD5EkETWFbtzs5UtNN0yAc
-        - +shEU+PkLYdwsUyjmdSOZA6muUF+uYkT1QMXBWtL+9MY/dKFpmPm1GEcW/IWPCyi
-        desc: 'Retrieve knowledge on after sales SOP. '
-        query_variable_selector:
-        - '1711528708197'
-        - sys.query
-        retrieval_mode: single
-        selected: false
-        single_retrieval_config:
-          model:
-            completion_params: {}
-            mode: chat
-            name: gemini-2.5-flash
-            provider: google
-        title: 'Knowledge Retrieval '
-        type: knowledge-retrieval
-      dragging: false
-      height: 96
-      id: '1711528768556'
-      position:
-        x: 645.5
-        y: 714.5
-      positionAbsolute:
-        x: 645.5
-        y: 714.5
-      selected: false
-      sourcePosition: right
-      targetPosition: left
-      type: custom
-      width: 242
-    - data:
-        dataset_ids:
-        - G2NIW1z3sbyrnr0SjhTYlTPluIhjkJN1gBCRXM5n7zKD5EkETWFbtzs5UtNN0yAc
-        - c1V8wt72PRAiYq0Hbjb4qNwb8XhPS9w+41CWTcDwxkmMMPA1fnoaFtMxtYvGMJ/m
-        desc: 'Retrieval knowledge about out products. '
-        query_variable_selector:
-        - '1711528708197'
-        - sys.query
-        retrieval_mode: single
-        selected: false
-        single_retrieval_config:
-          model:
-            completion_params: {}
-            mode: chat
-            name: gemini-2.5-flash
-            provider: google
-        title: 'Knowledge Retrieval '
-        type: knowledge-retrieval
-      dragging: false
-      height: 96
-      id: '1711528770201'
-      position:
-        x: 645.5
-        y: 868.6428571428572
-      positionAbsolute:
-        x: 645.5
-        y: 868.6428571428572
-      selected: false
-      sourcePosition: right
-      targetPosition: left
-      type: custom
-      width: 242
-    - data:
-        answer: 'Sorry, I can''t help you with these questions. '
-        desc: ''
-        selected: false
-        title: Answer
-        type: answer
-        variables: []
-      height: 116
-      id: '1711528775142'
-      position:
-        x: 645.5
-        y: 1044.2142857142856
-      positionAbsolute:
-        x: 645.5
-        y: 1044.2142857142856
+        x: 4.096783147582869
+        y: 624.796173054883
       selected: false
       sourcePosition: right
       targetPosition: left
@@ -294,8 +131,8 @@ workflow:
         context:
           enabled: true
           variable_selector:
-          - '1711528768556'
-          - result
+          - '1770181014076'
+          - text
         desc: ''
         memory:
           role_prefix:
@@ -306,84 +143,13 @@ workflow:
             size: 50
         model:
           completion_params:
-            frequency_penalty: 0
-            max_tokens: 512
-            presence_penalty: 0
             temperature: 0.7
             top_p: 1
           mode: chat
           name: gemini-2.5-flash
-          provider: google
+          provider: langgenius/gemini/google
         prompt_template:
-        - role: system
-          text: 'Use the following context as your learned knowledge, inside <context></context>
-            XML tags.
-
-            <context>
-
-            {{#context#}}
-
-            </context>
-
-            When answer to user:
-
-            - If you don''t know, just say that you don''t know.
-
-            - If you don''t know when you are not sure, ask for clarification.
-
-            Avoid mentioning that you obtained the information from the context.
-
-            Respond only in the language given by the "language" variable. Values: en=English, ko=Korean, zh=Chinese, ja=Japanese, es=Spanish. Current language: {{language}}. If empty or missing, use the language of the user''s question.'
-        selected: false
-        title: LLM
-        type: llm
-        variables:
-        - value_selector:
-          - '1711528708197'
-          - language
-          variable: language
-        vision:
-          enabled: false
-      dragging: false
-      height: 94
-      id: '1711528802931'
-      position:
-        x: 928.5
-        y: 714.5
-      positionAbsolute:
-        x: 928.5
-        y: 714.5
-      selected: false
-      sourcePosition: right
-      targetPosition: left
-      type: custom
-      width: 242
-    - data:
-        context:
-          enabled: true
-          variable_selector:
-          - '1711528770201'
-          - result
-        desc: ''
-        memory:
-          role_prefix:
-            assistant: ''
-            user: ''
-          window:
-            enabled: false
-            size: 50
-        model:
-          completion_params:
-            frequency_penalty: 0
-            max_tokens: 512
-            presence_penalty: 0
-            temperature: 0.7
-            top_p: 1
-          mode: chat
-          name: gemini-2.5-flash
-          provider: google
-        prompt_template:
-        - id: bf9dd6d8-9652-4ceb-9b81-30822aa7bf0e
+        - id: a50ef1e8-6092-4058-bf3e-70cce0407d05
           role: system
           text: 'Use the following context as your learned knowledge, inside <context></context>
             XML tags.
@@ -403,8 +169,9 @@ workflow:
             Avoid mentioning that you obtained the information from the context.
 
             Respond only in the language given by the "language" variable. Values: en=English, ko=Korean, zh=Chinese, ja=Japanese, es=Spanish. Current language: {{language}}. If empty or missing, use the language of the user''s question.'
-        selected: true
-        title: 'LLM '
+        selected: false
+        structured_output_enabled: true
+        title: LLM
         type: llm
         variables:
         - value_selector:
@@ -414,14 +181,14 @@ workflow:
         vision:
           enabled: false
       dragging: false
-      height: 94
-      id: '1711528815414'
+      height: 88
+      id: '1711528802931'
       position:
-        x: 928.5
-        y: 868.6428571428572
+        x: 713.3004309594536
+        y: 473.9559537854002
       positionAbsolute:
-        x: 928.5
-        y: 868.6428571428572
+        x: 713.3004309594536
+        y: 473.9559537854002
       selected: true
       sourcePosition: right
       targetPosition: left
@@ -442,43 +209,116 @@ workflow:
       height: 103
       id: '1711528833796'
       position:
-        x: 1211.5
-        y: 714.5
+        x: 1061.81306623036
+        y: 526.6725112624372
       positionAbsolute:
-        x: 1211.5
-        y: 714.5
+        x: 1061.81306623036
+        y: 526.6725112624372
       selected: false
       sourcePosition: right
       targetPosition: left
       type: custom
       width: 242
     - data:
-        answer: '{{#1711528815414.text#}}'
-        desc: ''
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: User question
+            ja_JP: User question
+            pt_BR: User question
+            zh_Hans: User question
+          label:
+            en_US: question
+            ja_JP: question
+            pt_BR: question
+            zh_Hans: question
+          llm_description: User question
+          max: null
+          min: null
+          name: question
+          options: []
+          placeholder:
+            en_US: User question
+            ja_JP: User question
+            pt_BR: User question
+            zh_Hans: User question
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: 5
+          form: llm
+          human_description:
+            en_US: Number of results to return
+            ja_JP: Number of results to return
+            pt_BR: Number of results to return
+            zh_Hans: Number of results to return
+          label:
+            en_US: top_k
+            ja_JP: top_k
+            pt_BR: top_k
+            zh_Hans: top_k
+          llm_description: Number of results to return
+          max: null
+          min: null
+          name: top_k
+          options: []
+          placeholder:
+            en_US: Number of results to return
+            ja_JP: Number of results to return
+            pt_BR: Number of results to return
+            zh_Hans: Number of results to return
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: number
+        params:
+          question: ''
+          top_k: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FEF7C3'
+          content: 🕵️
+        provider_id: a1744db9-36ab-44a2-abe2-20bcef718142
+        provider_name: CoinTutor RAG
+        provider_type: api
         selected: false
-        title: Answer 3
-        type: answer
-        variables:
-        - value_selector:
-          - '1711528815414'
-          - text
-          variable: text
-      dragging: false
-      height: 103
-      id: '1711528835179'
+        title: query
+        tool_configurations: {}
+        tool_description: Vector search with user question, returns list of related chunks
+        tool_label: query
+        tool_name: query
+        tool_node_version: '2'
+        tool_parameters:
+          question:
+            type: mixed
+            value: '{{#sys.query#}}'
+          top_k:
+            type: constant
+            value: 5
+        type: tool
+      height: 52
+      id: '1770181014076'
       position:
-        x: 1211.5
-        y: 868.6428571428572
+        x: 340.93943744381
+        y: 689.3184638435275
       positionAbsolute:
-        x: 1211.5
-        y: 868.6428571428572
+        x: 340.93943744381
+        y: 689.3184638435275
       selected: false
       sourcePosition: right
       targetPosition: left
       type: custom
       width: 242
     viewport:
-      x: 7.0368833430940185
-      y: -470.9496991823181
-      zoom: 0.9046469814462468
+      x: 104.42899394821461
+      y: -54.9848749469364
+      zoom: 0.6650002680124231
   rag_pipeline_variables: []
