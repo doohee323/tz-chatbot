@@ -95,7 +95,7 @@ def get_systems_for_status() -> dict[str, dict]:
         result[sid] = {"configured": bool(base and key), "has_base_url": bool(base), "has_api_key": bool(key)}
     if not result and not _systems_cache:
         settings = get_settings()
-        for sid in ("drillquiz", "cointutor"):
+        for sid in settings.allowed_system_ids_list:
             base = (settings.get_dify_base_url(sid) or "").strip()
             key = (settings.get_dify_api_key(sid) or "").strip()
             result[sid] = {"configured": bool(base and key), "has_base_url": bool(base), "has_api_key": bool(key)}

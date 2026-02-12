@@ -7,7 +7,7 @@ from sqlalchemy import select
 from app.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import API_KEY_HEADER, get_identity_from_body, get_identity_optional, ChatIdentity
-from app.config import get_settings
+from app.config import CHAT_TOKEN_ORIGINS_DEFAULT, get_settings
 from app.dify_client import delete_conversation, get_conversation_messages, get_conversations, send_chat_message
 from app.services.system_config import (
     get_allowed_system_ids_list,
@@ -27,7 +27,7 @@ logger = logging.getLogger("chat_gateway")
 async def get_status():
     """Returns only whether Dify integration is configured (no key/URL exposure). For 502 troubleshooting."""
     systems = {}
-    for sid in get_allowed_system_ids_list() or ("drillquiz", "cointutor"):
+    for sid in get_allowed_system_ids_list():
         base = (get_dify_base_url(sid) or "").strip()
         key = (get_dify_api_key(sid) or "").strip()
         systems[sid] = {"configured": bool(base and key), "has_base_url": bool(base), "has_api_key": bool(key)}
@@ -284,15 +284,16 @@ async def post_sync(
 @router.get("/chat-token", response_model=dict)
 async def get_chat_token(
     request: Request,
-    system_id: str = Query(..., description="System ID (e.g. drillquiz)"),
+    system_id: str = Query(..., description="System ID (from chat_systems)"),
     user_id: str = Query("12345", description="User ID"),
     api_key: str = Security(API_KEY_HEADER),
 ):
-    """Issue JWT for chat page. X-API-Key required."""
+    """Issue JWT for chat page. X-API-Key required (env or DB dify_chatbot_token)."""
     settings = get_settings()
-    if not api_key or (settings.api_keys_list and api_key not in settings.api_keys_list):
+    valid_keys = get_valid_chat_token_api_keys()
+    if not api_key or (valid_keys and api_key not in valid_keys):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required")
-    origins = settings.allowed_chat_token_origins_list
+    origins = settings.allowed_chat_token_origins_list or CHAT_TOKEN_ORIGINS_DEFAULT
     if origins:
         origin = request.headers.get("origin") or request.headers.get("referer") or ""
         origin_base = origin.split("?")[0].rstrip("/")

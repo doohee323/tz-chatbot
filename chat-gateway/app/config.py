@@ -2,6 +2,26 @@ from pydantic_settings import BaseSettings
 from pydantic import Field, computed_field
 from functools import lru_cache
 
+# Default origins for CORS and /v1/chat-token (when ALLOWED_CHAT_TOKEN_ORIGINS is empty). Keep in sync with main.py CORS.
+CHAT_TOKEN_ORIGINS_DEFAULT = [
+    "https://chat-admin.drillquiz.com",
+    "https://chat-admin-qa.drillquiz.com",
+    "https://chat-admin-dev.drillquiz.com",
+    "https://us-dev.drillquiz.com",
+    "https://us.drillquiz.com",
+    "https://us-qa.drillquiz.com",
+    "https://devops.drillquiz.com",
+    "https://leetcode.drillquiz.com",
+    "https://cointutor.net",
+    "https://www.cointutor.net",
+    "https://dev.cointutor.net",
+    "https://qa.cointutor.net",
+    "http://localhost:8080",
+    "http://localhost:8088",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8088",
+]
+
 
 class Settings(BaseSettings):
     # Shared Dify (can leave empty if using only per-system)
@@ -32,11 +52,7 @@ class Settings(BaseSettings):
             pw = quote_plus(self.postgres_password) if self.postgres_password else ""
             return f"postgresql+asyncpg://{self.postgres_user}:{pw}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         return "sqlite+aiosqlite:///./chat_gateway.db"
-    # Per-system Dify (empty = use shared dify_base_url / dify_api_key)
-    dify_drillquiz_base_url: str = ""
-    dify_drillquiz_api_key: str = ""
-    dify_cointutor_base_url: str = ""
-    dify_cointutor_api_key: str = ""
+    # Per-system Dify: use env DIFY_<system_id>_BASE_URL / DIFY_<system_id>_API_KEY when set (no hardcoded system names).
     # Redirect root URL to chat-admin (default: http://localhost:8080)
     chat_admin_url: str = Field("http://localhost:8080", validation_alias="CHAT_ADMIN_URL")
 

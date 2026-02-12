@@ -28,7 +28,7 @@ def _parse_date(s: str | None):
 async def list_cached_conversations(
     db: AsyncSession = Depends(get_db),
     api_key: str = Security(API_KEY_HEADER),
-    system_id: str | None = Query(None, description="System ID (e.g. cointutor)"),
+    system_id: str | None = Query(None, description="System ID (from chat_systems)"),
     user_id: str | None = Query(None, description="User ID"),
     from_date: str | None = Query(None, description="Start date YYYY-MM-DD"),
     to_date: str | None = Query(None, description="End date YYYY-MM-DD"),

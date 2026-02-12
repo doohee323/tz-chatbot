@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.config import get_settings
+from app.config import CHAT_TOKEN_ORIGINS_DEFAULT, get_settings
 from app.database import init_db
 from app.routers import cache_view, chat, chat_page, debug, index
 from app.services.system_config import refresh_allowed_systems
@@ -58,30 +58,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="TZ-Chat", description="TZ-Chat in front of Dify", lifespan=lifespan)
 
 # CORS: required for frontends (e.g. DrillQuiz) calling /v1/chat-token. OPTIONS preflight + X-API-Key allowed.
-CORS_ORIGINS_DEFAULT = [
-    "https://chat-admin.drillquiz.com",
-    "https://chat-admin-qa.drillquiz.com",
-    "https://chat-admin-dev.drillquiz.com",
-    "https://us-dev.drillquiz.com",
-    "https://us.drillquiz.com",
-    "https://us-qa.drillquiz.com",
-    "https://devops.drillquiz.com",
-    "https://leetcode.drillquiz.com",
-    "https://cointutor.net",
-    "https://www.cointutor.net",
-    "https://dev.cointutor.net",
-    "https://qa.cointutor.net",
-    "http://localhost:8080",
-    "http://localhost:8088",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:8088",
-]
 CORS_ALLOW_METHODS = ["GET", "POST", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = ["X-API-Key", "Content-Type", "Authorization", "Accept"]
 
-# Merge default domains with env extra list so all are allowed (env-only would omit us-dev etc.)
+# Merge default domains with env extra list (same default as /v1/chat-token origin check).
 _origins_extra = get_settings().allowed_chat_token_origins_list
-cors_origins = list(CORS_ORIGINS_DEFAULT)
+cors_origins = list(CHAT_TOKEN_ORIGINS_DEFAULT)
 for o in _origins_extra:
     if o and o not in cors_origins:
         cors_origins.append(o)
