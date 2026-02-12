@@ -10,7 +10,7 @@ from app.database import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
 
-# Cache: list of dicts with system_id, dify_base_url, dify_api_key
+# Cache: list of dicts with system_id, dify_base_url, dify_api_key, dify_chatbot_token
 _systems_cache: list[dict] = []
 
 
@@ -25,13 +25,13 @@ def _get_system(system_id: str | None) -> dict | None:
 
 
 async def refresh_allowed_systems() -> None:
-    """Load enabled systems (system_id, dify_base_url, dify_api_key) from chat_systems. Called on startup."""
+    """Load enabled systems (system_id, dify_base_url, dify_api_key, dify_chatbot_token) from chat_systems. Called on startup."""
     global _systems_cache
     try:
         async with AsyncSessionLocal() as session:
             result = await session.execute(
                 text(
-                    "SELECT system_id, dify_base_url, dify_api_key FROM chat_systems WHERE enabled"
+                    "SELECT system_id, dify_base_url, dify_api_key, dify_chatbot_token FROM chat_systems WHERE enabled"
                 )
             )
             rows = result.fetchall()
@@ -40,6 +40,7 @@ async def refresh_allowed_systems() -> None:
                     "system_id": (r[0] or "").strip().lower(),
                     "dify_base_url": (r[1] or "").strip().rstrip("/"),
                     "dify_api_key": (r[2] or "").strip(),
+                    "dify_chatbot_token": (r[3] or "").strip() if len(r) > 3 else "",
                 }
                 for r in rows
                 if r[0]
@@ -59,16 +60,32 @@ def get_allowed_system_ids_list() -> list[str]:
 
 
 def get_dify_base_url(system_id: str | None) -> str:
-    """Dify base URL for system. DB first, then env fallback."""
+    """Dify base URL for system. DB only when cache has data; else env fallback (local dev)."""
     s = _get_system(system_id)
-    if s and s.get("dify_base_url"):
-        return s["dify_base_url"]
+    if s:
+        return s.get("dify_base_url") or ""
+    if _systems_cache:
+        return ""
     return (get_settings().get_dify_base_url(system_id) or "").strip().rstrip("/")
 
 
 def get_dify_api_key(system_id: str | None) -> str:
-    """Dify API key for system. DB first, then env fallback."""
+    """Dify API key for system. DB only when cache has data; else env fallback (local dev)."""
     s = _get_system(system_id)
-    if s and s.get("dify_api_key"):
-        return s["dify_api_key"]
+    if s:
+        return s.get("dify_api_key") or ""
+    if _systems_cache:
+        return ""
     return (get_settings().get_dify_api_key(system_id) or "").strip()
+
+
+def get_valid_chat_token_api_keys() -> list[str]:
+    """API keys accepted for GET /v1/chat-token: DB chat_systems.dify_chatbot_token only when cache has data; else env CHAT_GATEWAY_API_KEY."""
+    if _systems_cache:
+        keys = []
+        for s in _systems_cache:
+            token = (s.get("dify_chatbot_token") or "").strip()
+            if token and token not in keys:
+                keys.append(token)
+        return keys
+    return list(get_settings().api_keys_list)

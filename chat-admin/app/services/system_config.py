@@ -43,18 +43,22 @@ def _get_system(system_id: str | None) -> dict | None:
 
 
 def get_dify_base_url(system_id: str | None) -> str:
-    """Dify base URL for system. DB first, then env fallback."""
+    """Dify base URL for system. DB only when cache has data; else env fallback (local dev)."""
     s = _get_system(system_id)
-    if s and s["dify_base_url"]:
-        return s["dify_base_url"]
+    if s:
+        return s.get("dify_base_url") or ""
+    if _systems_cache:
+        return ""
     return (get_settings().get_dify_base_url(system_id) or "").strip().rstrip("/")
 
 
 def get_dify_api_key(system_id: str | None) -> str:
-    """Dify API key for system. DB first, then env fallback."""
+    """Dify API key for system. DB only when cache has data; else env fallback (local dev)."""
     s = _get_system(system_id)
-    if s and s["dify_api_key"]:
-        return s["dify_api_key"]
+    if s:
+        return s.get("dify_api_key") or ""
+    if _systems_cache:
+        return ""
     return (get_settings().get_dify_api_key(system_id) or "").strip()
 
 
@@ -64,15 +68,17 @@ def get_api_keys_list() -> list[str]:
 
 
 def get_dify_chatbot_token(system_id: str | None) -> str:
-    """Dify embed token for chat page. DB first, then env (DIFY_<system>_CHATBOT_TOKEN)."""
+    """Dify embed token for chat page. DB only when cache has data; else env fallback (local dev)."""
     s = _get_system(system_id)
-    if s and s.get("dify_chatbot_token"):
-        return s["dify_chatbot_token"]
+    if s:
+        return s.get("dify_chatbot_token") or ""
+    if _systems_cache:
+        return ""
     return get_settings().get_dify_chatbot_token(system_id) or ""
 
 
 def get_allowed_system_ids_list() -> list[str]:
-    """Allowed system_ids. Empty = allow all. DB systems first."""
+    """Allowed system_ids. DB only when cache has data; else env fallback. Empty = allow all."""
     ids = [s["system_id"] for s in _systems_cache if s["system_id"]]
     if ids:
         return ids
@@ -80,14 +86,14 @@ def get_allowed_system_ids_list() -> list[str]:
 
 
 def get_systems_for_status() -> dict[str, dict]:
-    """Return {system_id: {configured, has_base_url, has_api_key}} for status endpoint."""
+    """Return {system_id: {configured, has_base_url, has_api_key}} for status endpoint. DB only when cache has data."""
     result = {}
     for s in _systems_cache:
         sid = s["system_id"]
         base = s.get("dify_base_url") or ""
         key = s.get("dify_api_key") or ""
         result[sid] = {"configured": bool(base and key), "has_base_url": bool(base), "has_api_key": bool(key)}
-    if not result:
+    if not result and not _systems_cache:
         settings = get_settings()
         for sid in ("drillquiz", "cointutor"):
             base = (settings.get_dify_base_url(sid) or "").strip()

@@ -13,6 +13,7 @@ from app.services.system_config import (
     get_allowed_system_ids_list,
     get_dify_api_key,
     get_dify_base_url,
+    get_valid_chat_token_api_keys,
 )
 from app.models import ConversationMapping
 from app.schemas import ChatRequest, ChatResponse, ConversationItem, MessageItem
