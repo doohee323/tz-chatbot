@@ -1,8 +1,8 @@
-<!-- ========== Add to App.vue (tz-drillquiz reference) ========== -->
+<!-- ========== Add to App.vue (CoinTutor / tz-drillquiz reference) ========== -->
 
-<!-- 1) Template: add one line below Footer at bottom of layout -->
+<!-- 1) Template: show chat only when logged in, e.g. below Footer -->
     <AppFooter />
-    <ChatWidget />
+    <ChatWidget v-if="isLoggedIn" />
   </div>
 </template>
 
@@ -15,4 +15,12 @@ import authService from '@/services/authService'
   components: {
     AppFooter,
     ChatWidget
+  },
+
+<!-- 4) data: ensure isLoggedIn exists and is updated on login/logout -->
+  data() {
+    return {
+      isLoggedIn: false,
+      // ...
+    }
   },

@@ -4,7 +4,7 @@
  * and adjust getUserSync() return value for your logged-in user.
  *
  * Required:
- * - getUserSync() => { username?: string } | null  (username when logged in, null otherwise)
+ * - getUserSync() => { username?: string, email?: string } | null  (logged in: username or email used as user_id; null → 'anonymous')
  * - subscribe(handler) => unsubscribe function
  */
 let currentUser = null

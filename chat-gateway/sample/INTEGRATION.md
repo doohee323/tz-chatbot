@@ -1,6 +1,6 @@
 # How to Add the Chat Module (Vue app)
 
-This document describes how to add the chat widget (as used in tz-drillquiz) to another Vue project.
+This document describes how to add the chat widget (as used in CoinTutor and tz-drillquiz) to another Vue project.
 
 ## Prerequisites
 
@@ -26,8 +26,8 @@ cp chat-gateway/sample/ChatWidget.vue your-vue-app/src/components/ChatWidget.vue
 ChatWidget expects the following interface:
 
 - **`authService.getUserSync()`**  
-  - Returns: `{ username: string }` or `null`  
-  - Logged-in user: return `username` (or user identifier)  
+  - Returns: `{ username?: string, email?: string }` or `null`  
+  - Logged-in user: return an object with `username` and/or `email` (widget uses `username || email` as `user_id`)  
   - Not logged in: `null` → widget sends `user_id` as `anonymous`
 
 - **`authService.subscribe(handler)`**  
@@ -36,8 +36,8 @@ ChatWidget expects the following interface:
 
 ### 2-1. When you already have authService
 
-- Either make `getUserSync()` return `{ username }`, or
-- Adjust the field used in ChatWidget’s `getChatUserId()` (id, email, etc.) to match your project in one place.
+- Either make `getUserSync()` return `{ username, email }`, or
+- Adjust the field used in ChatWidget’s `getChatUserId()` to match your project in one place.
 
 ### 2-2. When you don’t have authService
 
@@ -50,7 +50,8 @@ ChatWidget expects the following interface:
 
 - **import**: Add the `ChatWidget` component
 - **components**: Register `ChatWidget`
-- **template**: Add a single line `<ChatWidget />` at the bottom of the layout (e.g. after Footer)
+- **template**: Add `<ChatWidget v-if="isLoggedIn" />` at the bottom of the layout (e.g. after Footer). Showing only when logged in matches CoinTutor and tz-drillquiz.
+- **data**: Ensure `isLoggedIn` exists and is updated on login/logout.
 
 See `App.vue.snippet` for exact code snippets.
 
@@ -59,7 +60,7 @@ See `App.vue.snippet` for exact code snippets.
   <div id="app">
     <!-- ... existing layout ... -->
     <AppFooter />
-    <ChatWidget />
+    <ChatWidget v-if="isLoggedIn" />
   </div>
 </template>
 
@@ -67,6 +68,12 @@ See `App.vue.snippet` for exact code snippets.
 import ChatWidget from '@/components/ChatWidget.vue'
 // ...
 export default {
+  data() {
+    return {
+      isLoggedIn: false,
+      // ...
+    }
+  },
   components: {
     AppFooter,
     ChatWidget
@@ -86,70 +93,79 @@ The following env vars are required at build time. Use `.env` locally and replac
 |----------|-------------|---------|
 | `VUE_APP_CHAT_GATEWAY_URL` | TZ-Chat base URL (no trailing `/`) | `https://chat.drillquiz.com` |
 | `VUE_APP_CHAT_GATEWAY_API_KEY` | Gateway API key (one of CHAT_GATEWAY_API_KEY) | (injected by Jenkins/CI) |
-| `VUE_APP_CHAT_GATEWAY_SYSTEM_ID` | System identifier (must match gateway ALLOWED_SYSTEM_IDS) | `drillquiz` |
+| `VUE_APP_CHAT_GATEWAY_SYSTEM_ID` | System identifier (must match gateway ALLOWED_SYSTEM_IDS) | `drillquiz`, `cointutor` |
 
 Example file: `env-frontend.example`
 
-### 4-1. Local development (DrillQuiz)
+### 4-1. Local development
 
 - Vue CLI only auto-loads `.env` / `.env.local`. To use `env-frontend`, have **vue.config.js** read `env-frontend` at build time and attach it to `process.env`.
 - Then set URL/API key in `env-frontend` and restart `npm run serve` for the widget to work.
 
 ---
 
-## 5. i18n (optional)
+## 5. Chat token API and UI labels
 
-- If the app uses `vue-i18n`, the widget can pass `this.$i18n.locale` as the `lang` parameter when the gateway supports it.
-- Supported locales: `en`, `es`, `ko`, `zh`, `ja` (for gateway chat UI/response language when applicable).
+- **GET /v1/chat-token?system_id=...&user_id=...&lang=...**  
+  - Query: `system_id`, `user_id`, `lang` (e.g. `en`, `ko`, `ja`, `zh`, `es`, `fr`).  
+  - Header: `X-API-Key: <API_KEY>`.  
+  - Response: `{ token: string, ui?: { title, close, open, tokenError, loading } }`.  
+  - If the gateway returns `ui`, the widget uses those strings for the header/buttons/messages; otherwise it uses your app’s i18n (`$t('chat.*')`) or built-in defaults.
 
----
-
-## 6. CI build (e.g. Jenkins)
-
-- When TZ-Chat domain/API key differ per branch:
-  - In `env-frontend` set `VUE_APP_CHAT_GATEWAY_URL=https://chat.drillquiz.com` (fixed),  
-    `VUE_APP_CHAT_GATEWAY_API_KEY=CHAT_GATEWAY_API_KEY_PLACEHOLDER`,
-  - In the build script replace `CHAT_GATEWAY_API_KEY_PLACEHOLDER` with the API key from Jenkins credentials etc.
-
-### 6-1. This project (DrillQuiz) summary
-
-- **Jenkins**
-  - Credential ID: `CHAT_GATEWAY_API_KEY` (Secret text). If missing, only the chat widget is disabled; build continues.
-  - `ci/Jenkinsfile`: In Load Credentials stage load that credential; in Build Frontend stage run `export CHAT_GATEWAY_API_KEY` then `ci/k8s.sh build-frontend`.
-- **ci/k8s.sh**
-  - `build_frontend`: sed-replace only `CHAT_GATEWAY_API_KEY_PLACEHOLDER` in `env-frontend`. `VUE_APP_CHAT_GATEWAY_URL` is fixed to https://chat.drillquiz.com.
-- **Local development**
-  - `vue.config.js` loads `env-frontend` into `process.env`, so set URL/key in `env-frontend` and restart `npm run serve` for the widget.
+- **iframe**  
+  - URL: `{VUE_APP_CHAT_GATEWAY_URL}/chat?token=...&embed=1&lang=...`  
+  - Passing `lang` keeps the chat UI language in sync with the app.
 
 ---
 
-## 7. Flow summary
+## 6. i18n (optional)
 
-1. User clicks the chat button (bottom right).
-2. Call `GET /v1/chat-token?system_id=...&user_id=...` with `X-API-Key` to get a JWT.
-3. Open iframe with `chat URL?token=...&embed=1`.
-4. Logged-in users use `user_id` = username; otherwise `anonymous`.
+- If the app uses `vue-i18n`, the widget uses `this.$i18n.locale` for the `lang` parameter (allowed: `en`, `es`, `ko`, `zh`, `ja`, `fr`; others fall back to `en`).
+- Add translation keys for fallback when the gateway does not return `ui`:
+  - `chat.title`, `chat.close`, `chat.open`, `chat.tokenError`, `chat.loading`, `chat.notConfigured`, `chat.unknownError`, `chat.networkError`  
+  - `chat.networkError` is shown when the token request fails with a network/CORS error.
 
 ---
 
-## 8. CSP (Content-Security-Policy)
+## 7. CI build (e.g. Jenkins, refer/drillquiz/ci style)
 
-When the app sets a **Content-Security-Policy** header, the chat widget needs:
+- **env-frontend in repo**  
+  - Keep `env-frontend` in the repo (like tz-drillquiz) with placeholders:  
+    `VUE_APP_CHAT_GATEWAY_API_KEY=CHAT_GATEWAY_API_KEY_PLACEHOLDER`, and optionally `DOMAIN_PLACEHOLDER` for app host.
+- **Build script (e.g. ci/k8s.sh build_frontend)**  
+  - Replace placeholders in order: first `CHAT_GATEWAY_API_KEY_PLACEHOLDER` (from Jenkins credential or env), then `DOMAIN_PLACEHOLDER` (from branch/domain).  
+  - No need to extract env from ConfigMap; single source is `env-frontend` + sed.
+- **Jenkins**  
+  - Credential ID: `CHAT_GATEWAY_API_KEY` (Secret text). If missing, build continues but the chat widget will show “not configured”.
+
+---
+
+## 8. Flow summary
+
+1. User (logged in) sees the chat button (bottom right). Widget is typically shown only when `isLoggedIn` is true.
+2. On open, call `GET /v1/chat-token?system_id=...&user_id=...&lang=...` with `X-API-Key` to get a JWT and optional `ui` labels.
+3. Open iframe with `chat URL?token=...&embed=1&lang=...`.
+4. If the request fails with a network/CORS error, show `chat.networkError` (or equivalent). On success, use `data.ui` for labels when provided.
+
+---
+
+## 9. CSP (Content-Security-Policy)
+
+When the app sets a **Content-Security-Policy** header (e.g. Ingress nginx), the chat widget needs:
 
 - **connect-src**  
-  Include `https://chat.drillquiz.com` so `fetch('https://chat.drillquiz.com/v1/chat-token?...')` is allowed.
+  Include the chat gateway origin (e.g. `https://chat.drillquiz.com`) so `fetch('.../v1/chat-token?...')` is allowed.
 - **frame-src**  
-  Include `https://chat.drillquiz.com` so the chat UI iframe `https://chat.drillquiz.com/chat?token=...` can load.
+  Include the same origin so the chat UI iframe can load.
 
-Example (e.g. Ingress nginx `configuration-snippet`):
+Example (Ingress `configuration-snippet`):
 
 ```text
 connect-src 'self' ... https://chat.drillquiz.com;
 frame-src 'self' https://chat.drillquiz.com;
 ```
 
-If not set, the browser console will show  
-"Refused to connect ... violates the document's Content Security Policy" and the token request or iframe will be blocked.
+If not set, the browser will show “Refused to connect ... violates the document's Content Security Policy” and the token request or iframe will be blocked.
 
 ---
 
@@ -157,14 +173,14 @@ If not set, the browser console will show
 
 | File | Purpose |
 |------|---------|
-| `ChatWidget.vue` | Widget component (Vue 2 compatible: beforeDestroy, transition enter/leave). Copy and use |
-| `App.vue.snippet` | Snippets for import/registration/template in App.vue |
-| `env-frontend.example` | Frontend build env example (fixed URL, CI placeholder: CHAT_GATEWAY_API_KEY_PLACEHOLDER) |
-| `authService.adapter.example.js` | Minimal authService implementation when you don’t have one |
+| `ChatWidget.vue` | Widget component (Vue 2: beforeDestroy, transition enter/leave). Uses chatUi from API, chatLang, iframe lang, networkError. Copy and adapt. |
+| `App.vue.snippet` | Snippets for import, registration, and `<ChatWidget v-if="isLoggedIn" />` in App.vue |
+| `env-frontend.example` | Frontend build env example (gateway URL, API key placeholder, system_id) |
+| `authService.adapter.example.js` | Minimal authService (getUserSync with username/email, subscribe) when you don’t have one |
 | `INTEGRATION.md` | This integration guide |
 
 ### Jenkins credentials
 
 - To enable the chat widget in CI, add a **Secret text** credential in Jenkins.
-- **ID:** `CHAT_GATEWAY_API_KEY` (Jenkinsfile looks up by this ID)
-- **Value:** An API key issued by the TZ-Chat (one of CHAT_GATEWAY_API_KEY)
+- **ID:** `CHAT_GATEWAY_API_KEY`
+- **Value:** An API key issued by the TZ-Chat gateway (one of CHAT_GATEWAY_API_KEY).

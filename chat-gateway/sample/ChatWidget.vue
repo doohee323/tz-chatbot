@@ -37,10 +37,10 @@
 </template>
 
 <script>
-// Chat is handled by chat-gateway. Token from API (no i18n).
-// env-frontend or .env: VUE_APP_CHAT_GATEWAY_URL, VUE_APP_CHAT_GATEWAY_API_KEY
-// CI: VUE_APP_CHAT_GATEWAY_API_KEY=CHAT_GATEWAY_API_KEY_PLACEHOLDER in env-frontend → replaced by Jenkins/ci/k8s.sh
-// user_id: username when logged in, 'anonymous' when not
+// 채팅은 chat-gateway가 처리. 토큰·다국어(ui) 모두 API에서 받음. (CoinTutor/tz-drillquiz 적용 방식)
+// .env: VUE_APP_CHAT_GATEWAY_URL, VUE_APP_CHAT_GATEWAY_API_KEY, VUE_APP_CHAT_GATEWAY_SYSTEM_ID
+// user_id: 로그인 시 username 또는 email, 비로그인 시 'anonymous'
+// API 응답 data.ui: { title, close, open, tokenError, loading } 있으면 위젯 라벨에 사용 (없으면 아래 기본값 또는 프로젝트의 $t('chat.*'))
 import authService from '@/services/authService'
 
 export default {
@@ -54,13 +54,14 @@ export default {
       apiKey,
       systemId: (process.env.VUE_APP_CHAT_GATEWAY_SYSTEM_ID || 'drillquiz').trim(),
       chatToken: null,
+      chatUi: null,
       loadError: null,
       unsubscribeAuth: null
     }
   },
   computed: {
     chatT() {
-      return {
+      return this.chatUi || {
         title: 'Chat',
         close: 'Close',
         open: 'Open chat',
@@ -68,22 +69,20 @@ export default {
         loading: 'Loading...'
       }
     },
+    chatLang() {
+      const locale = (this.$i18n && this.$i18n.locale) ? this.$i18n.locale : 'en'
+      const allowed = ['en', 'es', 'ko', 'zh', 'ja', 'fr']
+      return allowed.includes(locale) ? locale : 'en'
+    },
     iframeSrc() {
       if (!this.chatToken) return ''
-      return `${this.chatGatewayUrl}/chat?token=${encodeURIComponent(this.chatToken)}&embed=1`
+      return `${this.chatGatewayUrl}/chat?token=${encodeURIComponent(this.chatToken)}&embed=1&lang=${encodeURIComponent(this.chatLang)}`
     }
   },
   mounted() {
-    // Where to set the API key (do not log the key value)
-    console.log(
-      '[ChatWidget] Chat API key: add the following to env-frontend at project root, then restart "npm run serve".',
-      '\n  - VUE_APP_CHAT_GATEWAY_URL (optional, default: http://localhost:8088)',
-      '\n  - VUE_APP_CHAT_GATEWAY_API_KEY (required, key issued by gateway)',
-      '\n  - VUE_APP_CHAT_GATEWAY_SYSTEM_ID (optional, default: drillquiz)',
-      '\n  API key configured:', this.apiKey ? 'yes' : 'no'
-    )
     this.unsubscribeAuth = authService.subscribe(() => {
       this.chatToken = null
+      this.chatUi = null
     })
   },
   beforeDestroy() {
@@ -92,18 +91,19 @@ export default {
   methods: {
     getChatUserId() {
       const user = authService.getUserSync()
-      return (user && user.username) ? String(user.username) : 'anonymous'
+      return (user && (user.username || user.email)) ? String(user.username || user.email) : 'anonymous'
     },
     async fetchToken() {
       if (this.chatToken) return
       this.loadError = null
       if (!this.apiKey) {
-        this.loadError = 'Chat is not configured. Set VUE_APP_CHAT_GATEWAY_API_KEY in env-frontend and restart the dev server.'
+        this.loadError = this.$t ? this.$t('chat.notConfigured') : 'Chat is not configured. Set VUE_APP_CHAT_GATEWAY_API_KEY in env-frontend and restart the dev server.'
         return
       }
       const userId = this.getChatUserId()
+      const lang = this.chatLang
+      const url = `${this.chatGatewayUrl}/v1/chat-token?system_id=${encodeURIComponent(this.systemId)}&user_id=${encodeURIComponent(userId)}&lang=${encodeURIComponent(lang)}`
       try {
-        const url = `${this.chatGatewayUrl}/v1/chat-token?system_id=${encodeURIComponent(this.systemId)}&user_id=${encodeURIComponent(userId)}`
         const res = await fetch(url, { headers: { 'X-API-Key': this.apiKey } })
         if (!res.ok) {
           const text = await res.text()
@@ -112,13 +112,19 @@ export default {
         const data = await res.json()
         this.chatToken = data.token || null
         if (!this.chatToken) throw new Error('No token in response')
+        this.chatUi = data.ui || null
       } catch (e) {
-        this.loadError = e.message || 'Unknown error'
+        const msg = e.message || (this.$t ? this.$t('chat.unknownError') : 'Unknown error')
+        if (msg === 'Failed to fetch' || (msg && msg.toLowerCase().includes('network'))) {
+          this.loadError = this.$t ? this.$t('chat.networkError') : 'Failed to fetch. Check: Chat Gateway URL is correct and reachable; CORS must allow this origin.'
+        } else {
+          this.loadError = msg
+        }
       }
     },
     toggleOpen() {
       this.open = !this.open
-      if (this.open && !this.chatToken && !this.loadError) this.fetchToken()
+      if (this.open && !this.chatToken) this.fetchToken()
     }
   }
 }
@@ -229,7 +235,6 @@ export default {
   transition: opacity 0.2s, transform 0.2s;
 }
 
-/* Vue 2: enter/leave (Vue 3: enter-from/leave-to) */
 .chat-panel-enter,
 .chat-panel-leave-to {
   opacity: 0;
