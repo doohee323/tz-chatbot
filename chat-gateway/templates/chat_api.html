@@ -76,7 +76,15 @@
     .input-row input:focus { outline: none; border-color: #2563eb; }
     .empty-state { color: #6b7280; text-align: center; padding: 2rem; }
     .error { color: #dc2626; font-size: 0.9rem; padding: 0.5rem; }
+    .msg-content { margin-top: 0.15rem; }
+    .msg-content p { margin: 0.25em 0; }
+    .msg-content p:first-child { margin-top: 0; }
+    .msg-content p:last-child { margin-bottom: 0; }
+    .msg-content ul, .msg-content ol { margin: 0.25em 0; padding-left: 1.25em; }
+    .msg-content strong { font-weight: 600; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 </head>
 <body>
   {% if not embed %}
@@ -161,19 +169,33 @@
         emptyState.textContent = embed ? t.empty : t.emptyFull;
       }
 
-      function addMessage(role, content) {
-        emptyState.style.display = 'none';
-        const div = document.createElement('div');
-        div.className = 'msg msg-' + role;
-        div.innerHTML = '<div class="msg-role">' + (role === 'user' ? t.me : t.bot) + '</div>' + escapeHtml(content || '');
-        messages.appendChild(div);
-        messages.scrollTop = messages.scrollHeight;
-      }
-
       function escapeHtml(s) {
         const div = document.createElement('div');
         div.textContent = s == null ? '' : s;
         return div.innerHTML;
+      }
+
+      function renderMarkdown(s) {
+        if (s == null || s === '') return '';
+        if (typeof marked === 'undefined') return escapeHtml(s);
+        try {
+          const parse = (typeof marked.parse === 'function') ? marked.parse : marked;
+          const html = parse(String(s));
+          return (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html) || '';
+        } catch (e) {
+          return escapeHtml(s);
+        }
+      }
+
+      function addMessage(role, content) {
+        emptyState.style.display = 'none';
+        const div = document.createElement('div');
+        div.className = 'msg msg-' + role;
+        const raw = content || '';
+        const body = role === 'user' ? escapeHtml(raw) : renderMarkdown(raw);
+        div.innerHTML = '<div class="msg-role">' + (role === 'user' ? t.me : t.bot) + '</div><div class="msg-content">' + body + '</div>';
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
       }
 
       async function loadConversations() {
