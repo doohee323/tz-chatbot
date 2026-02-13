@@ -118,6 +118,23 @@ pipeline {
                         echo "⚠️  POSTGRES_PASSWORD credential not found, using empty string"
                         env.POSTGRES_PASSWORD = ''
                     }
+                    // MinIO for chat quality data (rag-quality-data bucket). Same credential IDs as chat-admin.
+                    try {
+                        withCredentials([string(credentialsId: 'MINIO_ACCESS_KEY', variable: 'MINIO_ACCESS_KEY')]) {
+                            env.MINIO_ACCESS_KEY = env.MINIO_ACCESS_KEY
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️  MINIO_ACCESS_KEY credential not found, using empty string"
+                        env.MINIO_ACCESS_KEY = ''
+                    }
+                    try {
+                        withCredentials([string(credentialsId: 'MINIO_SECRET_KEY', variable: 'MINIO_SECRET_KEY')]) {
+                            env.MINIO_SECRET_KEY = env.MINIO_SECRET_KEY
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️  MINIO_SECRET_KEY credential not found, using empty string"
+                        env.MINIO_SECRET_KEY = ''
+                    }
 
                     // ArgoCD configuration
                     env.ARGOCD_ID = "tz-admin"
@@ -208,6 +225,8 @@ pipeline {
                                             export DIFY_API_KEY=${DIFY_API_KEY}
                                             export DIFY_DRILLQUIZ_API_KEY=${DIFY_DRILLQUIZ_API_KEY}
                                             export DIFY_COINTUTOR_API_KEY=${DIFY_COINTUTOR_API_KEY}
+                                            export MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+                                            export MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
                                             cd chat-gateway && ./ci/k8s.sh ${BUILD_NUMBER} ${GIT_BRANCH} ${NAMESPACE} deploy
                                         else
                                             echo "❌ chat-gateway/ci/k8s.sh file not found in workspace"

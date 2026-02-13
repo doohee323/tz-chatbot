@@ -255,11 +255,38 @@ curl -X POST "${GATEWAY_URL}/v1/chat" \
   }'
 ```
 
-### 6-4. MinIO 저장 확인
+### 6-4. MinIO 저장 확인 (ML용 데이터가 실제로 쌓이는지)
 
-- chat-gateway 로그: `Chat quality stored to MinIO: rag-quality-data/{project}/{topic}/raw/...`
-- MinIO 콘솔 또는 mc: `mc ls myminio/rag-quality-data/drillquiz/default/raw/$(date +%Y-%m-%d)/`
-- port-forward 시: `kubectl port-forward svc/minio 9000:9000 -n devops` 후 `http://localhost:9000` 접속
+**저장되는 조건**
+
+- chat-gateway(예: chat.drillquiz.com)에 **다음 3개 환경변수**가 모두 설정되어 있어야 함:
+  - `MINIO_ENDPOINT`
+  - `MINIO_ACCESS_KEY`
+  - `MINIO_SECRET_KEY`
+- 하나라도 비어 있으면 `record_chat_to_minio`는 **호출되지만 업로드를 스킵**하고 로그에 `Chat quality MinIO: skipped (... not configured)` 가 남음.
+
+**K8s에서 MinIO 미저장 원인 확인 (실제 사례)**
+
+- **ConfigMap** (`chat-gateway-configmap-main` 등): `MINIO_ENDPOINT`, `MINIO_RAG_QUALITY_BUCKET` 는 있음.
+- **Secret** (`chat-gateway-secret-main` 등): `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` **키가 아예 없을 수 있음** → 이 경우 Pod에 두 값이 주입되지 않아 MinIO 업로드 스킵됨.
+- 확인: `kubectl get secret chat-gateway-secret-main -n devops -o jsonpath='{.data}' | jq -r 'keys[]'` 에 `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` 가 없으면 저장 안 됨.
+- **조치**: Secret에 MinIO 인증 정보 추가 후 rollout restart. 예:
+  ```bash
+  kubectl patch secret chat-gateway-secret-main -n devops -p "{\"data\":{\"MINIO_ACCESS_KEY\":\"$(echo -n 'YOUR_MINIO_ACCESS_KEY' | base64)\",\"MINIO_SECRET_KEY\":\"$(echo -n 'YOUR_MINIO_SECRET_KEY' | base64)\"}}"
+  kubectl rollout restart deployment/chat-gateway -n devops
+  ```
+  (CI에서 배포 시 `ci/k8s.sh` 가 Secret을 생성할 때 `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` 환경변수를 넘겨 placeholder를 치환하도록 되어 있음. 배포 파이프라인에서 이 두 값을 설정해 주어야 함.)
+
+**저장 여부 확인 방법**
+
+| 방법 | 확인 내용 |
+|------|------------|
+| **Gateway 로그** | `Chat quality stored to MinIO: rag-quality-data/cointutor/default/raw/2026-02-13/...` 처럼 남으면 저장됨. `skipped` 또는 `Failed to store` 면 미저장/실패. |
+| **MinIO 버킷** | 버킷 `rag-quality-data` 아래 `cointutor/` 또는 `drillquiz/` → `default/`(또는 topic) → `raw/` → `YYYY-MM-DD/` → `{log_id}.json` 파일 존재 여부. |
+| **mc CLI** | `mc ls myminio/rag-quality-data/cointutor/default/raw/$(date +%Y-%m-%d)/` |
+| **K8s port-forward** | `kubectl port-forward svc/minio 9000:9000 -n devops` 후 브라우저 `http://localhost:9000` → 버킷·경로 확인. |
+
+CoinTutor에서 채팅 전송 시 요청이 `https://chat.drillquiz.com/v1/chat` 로 가므로, **같은 chat-gateway**가 MinIO에 기록한다. 해당 Pod/인스턴스에 위 환경변수가 주입되어 있어야 ML용 데이터가 MinIO에 쌓인다.
 
 ---
 
