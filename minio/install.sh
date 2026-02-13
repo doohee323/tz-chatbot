@@ -41,6 +41,8 @@ sed -i "s/k8s_project/${k8s_project}/g" minio-ingress.yaml_bak
 sed -i "s/k8s_domain/${k8s_domain}/g" minio-ingress.yaml_bak
 kubectl apply -f minio-ingress.yaml_bak -n ${NS}
 
+# Note: rag-quality-data bucket is created dynamically by chat-gateway on first upload.
+
 #kubectl -n ${NS} port-forward svc/minio 9000:9000
 #kubectl -n ${NS} port-forward svc/minio-console 9001:9001
 

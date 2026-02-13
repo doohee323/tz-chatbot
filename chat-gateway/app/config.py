@@ -25,8 +25,13 @@ CHAT_TOKEN_ORIGINS_DEFAULT = [
 
 class Settings(BaseSettings):
     # Shared Dify (can leave empty if using only per-system)
-    dify_base_url: str = ""
-    dify_api_key: str = ""
+    dify_base_url: str = Field("", validation_alias="DIFY_BASE_URL")
+    dify_api_key: str = Field("", validation_alias="DIFY_API_KEY")
+    # Per-system (env fallback when chat_systems DB is empty)
+    dify_drillquiz_base_url: str = Field("", validation_alias="DIFY_DRILLQUIZ_BASE_URL")
+    dify_drillquiz_api_key: str = Field("", validation_alias="DIFY_DRILLQUIZ_API_KEY")
+    dify_cointutor_base_url: str = Field("", validation_alias="DIFY_COINTUTOR_BASE_URL")
+    dify_cointutor_api_key: str = Field("", validation_alias="DIFY_COINTUTOR_API_KEY")
     jwt_secret: str = Field(..., validation_alias="CHAT_GATEWAY_JWT_SECRET")
     api_keys: str = Field("", validation_alias="CHAT_GATEWAY_API_KEY")
     allowed_system_ids: str = ""
@@ -40,6 +45,12 @@ class Settings(BaseSettings):
     postgres_user: str = Field("postgres", validation_alias="POSTGRES_USER")
     postgres_password: str = Field("", validation_alias="POSTGRES_PASSWORD")
     dify_chatbot_token: str = ""
+
+    # MinIO for chat quality data (rag-quality-data bucket). Empty = skip MinIO upload.
+    minio_endpoint: str = Field("", validation_alias="MINIO_ENDPOINT", description="e.g. http://minio.devops.svc.cluster.local:9000")
+    minio_access_key: str = Field("", validation_alias="MINIO_ACCESS_KEY")
+    minio_secret_key: str = Field("", validation_alias="MINIO_SECRET_KEY")
+    minio_rag_quality_bucket: str = Field("rag-quality-data", validation_alias="MINIO_RAG_QUALITY_BUCKET")
 
     @computed_field
     @property

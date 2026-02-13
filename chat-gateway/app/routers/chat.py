@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 import jwt
@@ -18,8 +19,47 @@ from app.services.system_config import (
 from app.models import ConversationMapping
 from app.schemas import ChatRequest, ChatResponse, ConversationItem, MessageItem
 from app.sync_service import record_chat_to_db, sync_all_from_mapping
+from app.services.chat_quality_minio import record_chat_to_minio
 
 router = APIRouter(prefix="/v1", tags=["chat"])
+
+
+def _dify_metadata_for_minio(result_metadata: dict | None) -> dict:
+    """Map Dify API metadata to our MinIO schema (plan 2-2).
+
+    Dify returns: retriever_resources[], usage.latency (seconds).
+    Workflow may add: topic, top_k, collection, model_name.
+    """
+    meta = result_metadata or {}
+    usage = meta.get("usage") or {}
+
+    # Retrieved: Dify uses retriever_resources (segment_id, score, content, document_name)
+    retrieved = meta.get("retrieved") or meta.get("retrieval_results")
+    if not retrieved and meta.get("retriever_resources"):
+        retrieved = [
+            {
+                "chunk_id": r.get("segment_id") or r.get("document_id") or "",
+                "score": r.get("score"),
+                "content": r.get("content") or "",
+                "source_path": r.get("document_name") or r.get("document_id") or "",
+            }
+            for r in meta["retriever_resources"]
+        ]
+
+    # Latency: Dify usage.latency is typically in seconds
+    latency_ms = meta.get("latency_ms")
+    if latency_ms is None and usage.get("latency") is not None:
+        val = usage["latency"]
+        latency_ms = int(val * 1000) if isinstance(val, (int, float)) and val < 1000 else int(val)
+
+    return {
+        "topic": meta.get("topic"),
+        "retrieved": retrieved,
+        "top_k": meta.get("top_k"),
+        "collection": meta.get("collection"),
+        "latency_ms": latency_ms,
+        "model_name": meta.get("model_name") or meta.get("model"),
+    }
 logger = logging.getLogger("chat_gateway")
 
 
@@ -139,6 +179,23 @@ async def post_chat(
                 body.message,
                 answer,
             )
+            # Store to MinIO for MLflow RAG quality (fire-and-forget, no await)
+            metadata = result.get("metadata") or {}
+            minio_meta = _dify_metadata_for_minio(metadata)
+            asyncio.create_task(record_chat_to_minio(
+                question=body.message,
+                answer=answer,
+                conversation_id=conversation_id,
+                message_id=str(message_id) if message_id else None,
+                system_id=ident.system_id,
+                topic=minio_meta.get("topic"),
+                retrieved=minio_meta.get("retrieved"),
+                top_k=minio_meta.get("top_k"),
+                collection=minio_meta.get("collection"),
+                latency_ms=minio_meta.get("latency_ms"),
+                model_name=minio_meta.get("model_name"),
+                dify_metadata=metadata if metadata else None,
+            ))
     except Exception as e:
         logger.warning(
             "Failed to record chat for system_id=%s conversation_id=%s: %s",
