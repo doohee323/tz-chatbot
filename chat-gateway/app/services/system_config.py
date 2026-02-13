@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Cache: list of dicts with system_id, dify_base_url, dify_api_key, dify_chatbot_token
 _systems_cache: list[dict] = []
+_logged_db_fallback_once = False
 
 
 def _get_system(system_id: str | None) -> dict | None:
@@ -48,8 +49,13 @@ async def refresh_allowed_systems() -> None:
             ids = [s["system_id"] for s in _systems_cache]
             logger.info("Loaded systems from DB: %s", ids)
     except Exception as e:
-        logger.warning("Could not load chat_systems from DB: %s. Using env fallback.", e)
+        global _logged_db_fallback_once
         _systems_cache = []
+        if not _logged_db_fallback_once:
+            _logged_db_fallback_once = True
+            logger.warning("Could not load chat_systems from DB: %s. Using env fallback.", e)
+        else:
+            logger.debug("chat_systems load skipped (env fallback): %s", e)
 
 
 def get_allowed_system_ids_list() -> list[str]:

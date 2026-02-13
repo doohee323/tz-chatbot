@@ -21,57 +21,33 @@ MLflow 기반 RAG 품질 개선을 위해, 대화 데이터를 MinIO에 저장�
 
 ---
 
-## 2. 필요한 데이터 항목 (rag-quality-data-collection 기준)
+## 2. 저장하는 데이터 (기존 필드 + 분석용 필드)
 
-### 2-1. 필수 (최소)
+기존 필드(지식 검색/위키피디아 등 실행 맥락)와 분석용 필드(품질 평가) **둘 다** 저장한다.
 
-| 항목 | 설명 | 수집 위치 |
-|------|------|-----------|
-| **question** | 사용자 질문 | chat-gateway |
-| **answer** | 모델 최종 답변 | chat-gateway |
-| **timestamp** | 요청 시각 | chat-gateway |
-| **conversation_id** | 대화 세션 ID | chat-gateway |
-| **message_id** | 메시지 ID | chat-gateway |
+### 2-1. 저장 필드
 
-### 2-2. 추천 추가 (RAG·품질 분석 시)
+| 구분 | 항목 | 설명 |
+|------|------|------|
+| **식별·경로** | log_id, log_type, timestamp, question, answer, conversation_id, message_id, system_id, project, topic | 로그 식별·경로·대화 식별 |
+| **기존 (Dify)** | **retrieved** | 지식 검색/위키피디아 검색 결과 (retriever_resources 매핑). 지식 검색 경로면 채워져야 함 |
+| | **top_k**, **collection** | 검색 개수, 사용한 knowledge base/소스 |
+| | **latency_ms**, **model_name** | 소요 시간, 사용 LLM (성능·비용 분석) |
+| | **dify_metadata** | Dify 응답 metadata 전체 (usage 등) |
+| **분석용** | **question_id**, **ground_truth**, **keywords** | 기대 질문 세트 매칭 시 (LLM-as-judge·일관성 검사) |
 
-| 항목 | 설명 | 수집 위치 |
-|------|------|-----------|
-| **retrieved** | RAG 검색 결과 (chunk_id, score, content, source_path) | Dify metadata → 매핑 |
-| **top_k** | 검색 chunk 개수 | Dify metadata (워크플로 출력 시) |
-| **collection** | Qdrant collection | Dify metadata (워크플로 출력 시) |
-| **latency_ms** | 소요 시간(ms) | Dify metadata.usage.latency → 변환 |
-| **model_name** | 사용 LLM | Dify metadata (워크플로 출력 시) |
-| **system_id** | 출처 시스템 (cointutor, drillquiz) | chat-gateway |
-| **dify_metadata** | Dify 응답 metadata 전체 (usage, retriever_resources 등) | Dify API 응답 그대로 저장 |
+**retriever_resources 참고**: 워크플로에서 "지식 검색" 또는 "위키피디아" 경로로 질문이 가면 검색이 수행된다. Dify **내장 Knowledge Retrieval** 노드를 쓰면 `metadata.retriever_resources`가 채워지고, gateway가 이를 `retrieved`로 매핑해 저장한다. (API 도구(Tool)로만 검색하면 Dify가 retriever_resources를 비울 수 있음. "코인튜터는?"처럼 지식 검색으로 가야 하는데 비어 있으면, Dify 앱에서 해당 노드가 내장 지식 검색인지·메타데이터 노출 설정인지 확인할 것.)
 
-### 2-3. Dify API 실제 응답과 매핑
+### 2-2. ground_truth / keywords (기대 질문 세트)
 
-chat-gateway는 Dify **Chatflow /chat-messages** 응답의 `metadata`를 그대로 쓰지 않고, 아래처럼 매핑한다.
+수동으로 정의한 **기대 질문 세트(YAML)**와 매칭되면, 해당 레코드에 `question_id`, `ground_truth`, `keywords`를 붙여 저장한다. → LLM-as-judge, 키워드 기반 자동 점수화, 일관성 검사에 활용.
 
-| 우리 필드 | Dify 응답 | 비고 |
-|-----------|-----------|------|
-| **retrieved** | `metadata.retriever_resources` | 배열 항목을 `chunk_id`(segment_id), `score`, `content`, `source_path`(document_name) 형태로 변환 |
-| **latency_ms** | `metadata.usage.latency` | Dify는 초 단위이면 ×1000 해서 ms로 저장 |
-| **top_k**, **collection**, **model_name** | (없음) | Dify 기본 응답에는 없음. 워크플로에서 **메타데이터 출력**으로 넣어 주면 수집됨 |
+| 환경변수 | 설명 |
+|----------|------|
+| **EXPECTED_QUESTIONS_PATH** | YAML 파일 경로 (예: `/app/config/expected_questions.yaml`) |
 
-- RAG를 쓰는 앱이면 `retriever_resources`가 채워지고, 위 매핑으로 `retrieved`가 MinIO JSON에 들어간다.
-- `top_k`/`collection`/`model_name`을 쓰려면 Dify 워크플로 노드에서 “메타데이터에 추가”하도록 설정해야 한다.
-
-### 2-4. 전체 Dify metadata 저장 (dify_metadata)
-
-**누락 없이** 분석·재현을 위해, Dify `/chat-messages` 응답의 `metadata` 객체 전체를 MinIO JSON의 **`dify_metadata`** 필드에 그대로 저장한다.
-
-**참고(커스텀 도구 RAG)**: DrillQuiz처럼 워크플로에서 **API 도구(Tool)** 노드(예: DrillQuiz RAG)로만 RAG를 호출하는 경우, Dify는 `metadata.retriever_resources`를 채우지 않는다. 내장 **Knowledge Retrieval** 노드를 쓰면 이 필드가 채워진다. 커스텀 도구만 쓰면 답변은 RAG 기반이어도 `retriever_resources`는 빈 배열로 온다.
-
-| Dify metadata 필드 | 설명 |
-|--------------------|------|
-| **usage** | prompt_tokens, completion_tokens, total_tokens, latency(초), time_to_first_token, time_to_generate, 가격 등 |
-| **retriever_resources** | RAG 검색 결과 원본 (dataset_id, document_id, segment_id, score, content 등) |
-| **annotation_reply** | 어노테이션 답변 (있을 경우) |
-| 기타 | 워크플로에서 메타데이터로 추가한 모든 필드 |
-
-- 상위 필드(retrieved, latency_ms 등)는 위 매핑으로 **정규화**해 두고, `dify_metadata`에는 **원본 전체**를 넣어 두므로, 이후 스키마가 바뀌어도 원본을 활용할 수 있다.
+- YAML 형식: `questions:` 아래에 `id`, `question`, `ground_truth`, `keywords` 리스트. 사용자 질문 문자열과 **완전 일치**하는 항목이 있으면 해당 id/ground_truth/keywords를 로그에 추가.
+- 예시: `chat-gateway/config/expected_questions.cointutor.example.yaml` 참고.
 
 ---
 
@@ -97,46 +73,31 @@ rag-quality-data/                          # 버킷 (없으면 동적 생성)
 
 ## 4. 데이터 형식 (JSON)
 
-**정규화 필드** (분석·쿼리용) + **dify_metadata** (원본 전체).
+기존 필드(실행 맥락) + 분석용 필드 모두 저장.
 
 ```json
 {
   "log_id": "uuid",
   "log_type": "chat_quality",
   "timestamp": "2025-02-12T10:30:00Z",
-  "system_id": "cointutor",
   "project": "cointutor",
   "topic": "default",
+  "question": "코인튜터는?",
+  "answer": "코인튜터는 대한민국의 블록체인 및 암호화폐 전문 교육 기관입니다...",
   "conversation_id": "conv-xxx",
   "message_id": "msg-xxx",
-  "question": "환불은 며칠 안에 가능한가?",
-  "answer": "환불은 구매일로부터 7일 이내에 가능합니다.",
+  "system_id": "cointutor",
   "retrieved": [
-    {
-      "chunk_id": "abc123_chunk_0",
-      "score": 0.92,
-      "content": "환불 정책: 구매일로부터 7일 이내...",
-      "source_path": "policy/refund_2025.pdf"
-    }
+    { "chunk_id": "abc_chunk_0", "score": 0.92, "content": "...", "source_path": "USER_GUIDE_QA..." }
   ],
   "top_k": 5,
   "collection": "rag_docs_cointutor",
   "latency_ms": 1200,
-  "model_name": "gpt-4o-mini",
-  "dify_metadata": {
-    "annotation_reply": null,
-    "retriever_resources": [],
-    "usage": {
-      "prompt_tokens": 1399,
-      "completion_tokens": 326,
-      "total_tokens": 1725,
-      "latency": 1.2,
-      "time_to_first_token": 0.8,
-      "time_to_generate": 0.4,
-      "total_price": "0.0012347",
-      "currency": "USD"
-    }
-  }
+  "model_name": "Gemini CHAT",
+  "dify_metadata": { "usage": { "total_tokens": 1725, "latency": 1.2 }, "retriever_resources": [] },
+  "question_id": "q_cointutor_1",
+  "ground_truth": "블록체인 및 암호화폐 전문 교육 기관",
+  "keywords": ["블록체인", "암호화폐", "교육", "2018"]
 }
 ```
 
@@ -152,6 +113,7 @@ rag-quality-data/                          # 버킷 (없으면 동적 생성)
 | MINIO_ACCESS_KEY | Access Key (rootUser 또는 IAM) | |
 | MINIO_SECRET_KEY | Secret Key (rootPassword 또는 IAM) | |
 | MINIO_RAG_QUALITY_BUCKET | 버킷명 (기본: rag-quality-data) | `rag-quality-data` |
+| EXPECTED_QUESTIONS_PATH | 기대 질문 YAML (ground_truth/keywords 매칭) | `/app/config/expected_questions.yaml` |
 
 ### 5-2. K8s 배포 시
 
@@ -297,6 +259,8 @@ CoinTutor에서 채팅 전송 시 요청이 `https://chat.drillquiz.com/v1/chat`
 - [x] chat-gateway `record_chat_to_minio` 구현
 - [x] MinIO 버킷 동적 생성 (없으면 make_bucket)
 - [x] chat-gateway에서 대화마다 MinIO 업로드 (record_chat 후 호출)
+- [x] MinIO payload에 `question_id`, `ground_truth`, `keywords` 저장 (기대 질문 매칭 시)
+- [x] EXPECTED_QUESTIONS_PATH 로 기대 질문 YAML 로드 후 질문 매칭 시 ground_truth/keywords 부여
 - [ ] Dify 워크플로우에서 RAG 메타데이터(retrieved 등)를 응답 metadata에 포함하도록 설정 (선택)
 
 ### tz-mlops-mlflow (ML 소비)

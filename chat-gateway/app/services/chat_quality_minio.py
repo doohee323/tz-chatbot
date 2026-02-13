@@ -25,7 +25,6 @@ def _derive_topic_from_collection(collection: str | None) -> str:
     """Extract topic from collection name, e.g. rag_docs_cointutor -> cointutor."""
     if not collection:
         return "default"
-    # rag_docs_cointutor -> cointutor, rag_docs_drillquiz -> drillquiz
     if "_" in collection:
         return collection.rsplit("_", 1)[-1].lower()
     return collection.lower()
@@ -46,10 +45,14 @@ async def record_chat_to_minio(
     latency_ms: int | None = None,
     model_name: str | None = None,
     dify_metadata: dict | None = None,
+    ground_truth: str | None = None,
+    keywords: list[str] | None = None,
+    question_id: str | None = None,
 ) -> str | None:
     """Store one chat turn to MinIO. Path: {project}/{topic}/raw/{date}/{log_id}.json
 
-    Best-effort, non-blocking. Bucket is created if missing.
+    Best-effort, non-blocking. 기존 필드(retrieved, dify_metadata, top_k, collection, latency_ms, model_name)와
+    분석용 필드(question_id, ground_truth, keywords) 모두 저장.
     """
     from app.config import get_settings
     settings = get_settings()
@@ -59,7 +62,7 @@ async def record_chat_to_minio(
     secret_key = (settings.minio_secret_key or "").strip()
 
     if not endpoint or not access_key or not secret_key:
-        logger.debug(
+        logger.info(
             "Chat quality MinIO: skipped (MINIO_ENDPOINT/ACCESS_KEY/SECRET_KEY not configured)"
         )
         return None
@@ -77,12 +80,17 @@ async def record_chat_to_minio(
     ts_str = ts.strftime("%Y-%m-%dT%H:%M:%SZ") if ts else datetime.utcnow().isoformat() + "Z"
     date_path = ts.strftime("%Y-%m-%d") if ts else datetime.utcnow().strftime("%Y-%m-%d")
 
+    project = (system_id or "default").lower()
+    topic_val = (topic or _derive_topic_from_collection(collection) or "default").lower()
+
     payload: dict[str, Any] = {
         "log_id": log_id,
         "log_type": "chat_quality",
         "timestamp": ts_str,
         "question": question or "",
         "answer": answer or "",
+        "project": project,
+        "topic": topic_val,
     }
     if conversation_id:
         payload["conversation_id"] = conversation_id
@@ -100,16 +108,16 @@ async def record_chat_to_minio(
         payload["latency_ms"] = latency_ms
     if model_name:
         payload["model_name"] = model_name
-    # Full Dify metadata (usage, retriever_resources, annotation_reply, workflow extras)
     if dify_metadata:
         payload["dify_metadata"] = dify_metadata
+    if question_id:
+        payload["question_id"] = question_id
+    if ground_truth is not None:
+        payload["ground_truth"] = ground_truth
+    if keywords is not None:
+        payload["keywords"] = keywords
 
-    project = (system_id or "default").lower()
-    topic_val = (topic or _derive_topic_from_collection(collection) or "default").lower()
     object_path = f"{project}/{topic_val}/raw/{date_path}/{log_id}.json"
-    if topic_val:
-        payload["topic"] = topic_val
-    payload["project"] = project
 
     def _upload():
         # Parse endpoint: "host:port", "http://host:port", or "https://host:port"
@@ -133,6 +141,7 @@ async def record_chat_to_minio(
         if not client.bucket_exists(bucket):
             client.make_bucket(bucket)
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        logger.debug("Chat quality payload (MinIO %s/%s): %s", bucket, object_path, data.decode("utf-8"))
         from io import BytesIO
         client.put_object(
             bucket,

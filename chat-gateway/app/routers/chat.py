@@ -20,20 +20,15 @@ from app.models import ConversationMapping
 from app.schemas import ChatRequest, ChatResponse, ConversationItem, MessageItem
 from app.sync_service import record_chat_to_db, sync_all_from_mapping
 from app.services.chat_quality_minio import record_chat_to_minio
+from app.services.rag_quality import get_expected_for_question
 
 router = APIRouter(prefix="/v1", tags=["chat"])
 
 
 def _dify_metadata_for_minio(result_metadata: dict | None) -> dict:
-    """Map Dify API metadata to our MinIO schema (plan 2-2).
-
-    Dify returns: retriever_resources[], usage.latency (seconds).
-    Workflow may add: topic, top_k, collection, model_name.
-    """
+    """Map Dify API metadata to MinIO schema. 지식 검색/위키피디아 경로 시 retriever_resources가 채워질 수 있음."""
     meta = result_metadata or {}
     usage = meta.get("usage") or {}
-
-    # Retrieved: Dify uses retriever_resources (segment_id, score, content, document_name)
     retrieved = meta.get("retrieved") or meta.get("retrieval_results")
     if not retrieved and meta.get("retriever_resources"):
         retrieved = [
@@ -45,13 +40,10 @@ def _dify_metadata_for_minio(result_metadata: dict | None) -> dict:
             }
             for r in meta["retriever_resources"]
         ]
-
-    # Latency: Dify usage.latency is typically in seconds
     latency_ms = meta.get("latency_ms")
     if latency_ms is None and usage.get("latency") is not None:
         val = usage["latency"]
         latency_ms = int(val * 1000) if isinstance(val, (int, float)) and val < 1000 else int(val)
-
     return {
         "topic": meta.get("topic"),
         "retrieved": retrieved,
@@ -60,6 +52,43 @@ def _dify_metadata_for_minio(result_metadata: dict | None) -> dict:
         "latency_ms": latency_ms,
         "model_name": meta.get("model_name") or meta.get("model"),
     }
+
+
+async def _record_chat_to_minio_task(
+    *,
+    question: str,
+    answer: str,
+    conversation_id: str,
+    message_id: str | None,
+    system_id: str,
+    minio_meta: dict,
+    dify_metadata: dict | None,
+) -> None:
+    """Fire-and-forget: Dify 기존 필드 + 기대 질문 매칭(분석용 필드) 모두 MinIO에 기록."""
+    logger.info("Chat quality: recording to MinIO (system_id=%s)", system_id)
+    settings = get_settings()
+    expected = None
+    if (settings.expected_questions_path or "").strip():
+        expected = get_expected_for_question(question, settings.expected_questions_path.strip())
+    await record_chat_to_minio(
+        question=question,
+        answer=answer,
+        conversation_id=conversation_id,
+        message_id=message_id,
+        system_id=system_id,
+        topic=minio_meta.get("topic"),
+        retrieved=minio_meta.get("retrieved"),
+        top_k=minio_meta.get("top_k"),
+        collection=minio_meta.get("collection"),
+        latency_ms=minio_meta.get("latency_ms"),
+        model_name=minio_meta.get("model_name"),
+        dify_metadata=dify_metadata,
+        ground_truth=expected.get("ground_truth") if expected else None,
+        keywords=expected.get("keywords") if expected else None,
+        question_id=expected.get("question_id") if expected else None,
+    )
+
+
 logger = logging.getLogger("chat_gateway")
 
 
@@ -182,18 +211,13 @@ async def post_chat(
             # Store to MinIO for MLflow RAG quality (fire-and-forget, no await)
             metadata = result.get("metadata") or {}
             minio_meta = _dify_metadata_for_minio(metadata)
-            asyncio.create_task(record_chat_to_minio(
+            asyncio.create_task(_record_chat_to_minio_task(
                 question=body.message,
                 answer=answer,
                 conversation_id=conversation_id,
                 message_id=str(message_id) if message_id else None,
                 system_id=ident.system_id,
-                topic=minio_meta.get("topic"),
-                retrieved=minio_meta.get("retrieved"),
-                top_k=minio_meta.get("top_k"),
-                collection=minio_meta.get("collection"),
-                latency_ms=minio_meta.get("latency_ms"),
-                model_name=minio_meta.get("model_name"),
+                minio_meta=minio_meta,
                 dify_metadata=metadata if metadata else None,
             ))
     except Exception as e:

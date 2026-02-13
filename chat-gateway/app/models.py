@@ -1,7 +1,24 @@
-from sqlalchemy import String, DateTime, Text, Index, UniqueConstraint
+from sqlalchemy import String, DateTime, Text, Boolean, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 from app.database import Base
+
+
+class ChatSystem(Base):
+    """System config (drillquiz, cointutor). Same schema as chat-admin; table created by gateway for local SQLite."""
+    __tablename__ = "chat_systems"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    system_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    display_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    dify_base_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    dify_api_key: Mapped[str] = mapped_column(String(256), nullable=False, default="")
+    dify_chatbot_token: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    allowed_origins: Mapped[str] = mapped_column(String(1024), nullable=False, default="")
+    enabled: Mapped[bool] = mapped_column(nullable=False, default=True)
+    created_by: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class SyncUser(Base):

@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     minio_secret_key: str = Field("", validation_alias="MINIO_SECRET_KEY")
     minio_rag_quality_bucket: str = Field("rag-quality-data", validation_alias="MINIO_RAG_QUALITY_BUCKET")
 
+    # Path to expected_questions YAML for ground_truth/keywords enrichment in MinIO logs. Empty = skip.
+    expected_questions_path: str = Field("", validation_alias="EXPECTED_QUESTIONS_PATH")
+
     @computed_field
     @property
     def effective_database_url(self) -> str:

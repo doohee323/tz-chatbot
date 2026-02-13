@@ -1,0 +1,19 @@
+# CoinTutor RAG 품질·일관성 평가용 기대 질문 세트 (예시)
+# chat-gateway가 이 파일을 EXPECTED_QUESTIONS_PATH 로 로드하면,
+# MinIO 로그에 question_id, ground_truth, keywords 가 매칭되어 저장됩니다.
+# → LLM-as-judge, 키워드 평가, 일관성 검사에 활용 가능.
+#
+# 사용: 복사 후 expected_questions.yaml 로 저장하고, 경로를 환경변수에 설정.
+#   EXPECTED_QUESTIONS_PATH=/app/config/expected_questions.yaml
+
+questions:
+  - id: "q_cointutor_1"
+    question: "코인튜터는?"
+    ground_truth: "블록체인 및 암호화폐 전문 교육 기관"
+    keywords: ["블록체인", "암호화폐", "교육", "2018"]
+
+  # 추가 질문 예시
+  # - id: "q_cointutor_2"
+  #   question: "코인튜터 설립 연도는?"
+  #   ground_truth: "2018년"
+  #   keywords: ["2018", "설립"]
