@@ -136,11 +136,11 @@ pipeline {
                         env.MINIO_SECRET_KEY = ''
                     }
 
-                    // ArgoCD configuration
+                    // ArgoCD not used for chat-gateway; always deploy with kubectl so Jenkins-injected secrets (e.g. MINIO_*) are applied.
                     env.ARGOCD_ID = "tz-admin"
                     env.ARGOCD_SERVER = 'argocd.drillquiz.com'
                     env.ARGOCD_REPO_URL = 'https://github.com/doohee323/tz-argocd-repo.git'
-                    env.ARGOCD_ENABLED = "${(env.BRANCH_NAME ?: env.GIT_BRANCH ?: env.CHANGE_BRANCH ?: 'main').replaceAll('^origin/', '') == 'qa' ? 'true' : 'false'}"
+                    env.ARGOCD_ENABLED = 'false'
                 }
             }
         }
