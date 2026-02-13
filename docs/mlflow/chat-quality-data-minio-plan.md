@@ -177,7 +177,28 @@ env:
 
 ## 6. 테스트 (curl)
 
-MinIO 저장은 `POST /v1/chat` 호출 시 백그라운드로 수행된다. chat 응답이 오면 MinIO 업로드는 별도로 진행 중이다.
+채팅 결과 기록(DB + MinIO)은 **POST /v1/chat** 한 번으로 트리거된다. 응답이 오면 백그라운드에서 `record_chat_to_db` → `record_chat_to_minio` 가 수행된다.
+
+### 채팅 결과 기록 API (curl 샘플)
+
+```bash
+# 환경 변수 (로컬 예시)
+export GATEWAY_URL="http://localhost:8088"
+export API_KEY="your-chat-gateway-api-key"
+
+# 채팅 전송 → DB 기록 + MinIO 기록(백그라운드) 트리거
+curl -s -X POST "${GATEWAY_URL}/v1/chat" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ${API_KEY}" \
+  -d '{
+    "system_id": "drillquiz",
+    "user_id": "test-user-001",
+    "message": "환불은 며칠 안에 가능한가?"
+  }' | jq .
+```
+
+- **응답**: `conversation_id`, `message_id`, `answer`, `metadata`(Dify 원본)
+- **기록**: 동일 요청 기준으로 SQLite/DB에 대화 저장, MinIO `rag-quality-data/{project}/{topic}/raw/{date}/{log_id}.json` 에 JSON 저장
 
 ### 6-1. Chat API 호출 (API Key 사용)
 
