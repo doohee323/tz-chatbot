@@ -23,6 +23,10 @@ image:
 # Vector DB: use existing RAG Qdrant (rag namespace)
 api:
   extraEnv:
+    # Plugin (e.g. dify_extractor) fetches files from this URL; must be reachable from plugin-daemon pod.
+    # See: https://github.com/langgenius/dify-official-plugins/issues/1816
+    - name: FILES_URL
+      value: "http://dify-api:5001"
     - name: CHECK_UPDATE_URL
       value: ""
     - name: VECTOR_STORE
@@ -62,7 +66,9 @@ api:
     appApi: "DIFY_BASE_URL_REPLACE"
     appWeb: "DIFY_BASE_URL_REPLACE"
     files: "DIFY_BASE_URL_REPLACE"
-  secretKey: "sk-dify-change-me-in-production-42chars-minimum"
+  # Must match existing dify-api Secret SECRET_KEY or all sessions break after upgrade.
+  # Get current: kubectl get secret -n dify dify-api -o jsonpath='{.data.SECRET_KEY}' | base64 -d
+  secretKey: "sk-dify-REPLACE-WITH-CLUSTER-VALUE"
   migration: true
   # NFS PVC (RWX) for api/worker shared. NFS provisioner must be installed first (dynamic-provisioning/nfs)
   persistence:
@@ -73,6 +79,9 @@ api:
 
 worker:
   extraEnv:
+    # Same as api: file URLs passed to plugins must be reachable from plugin-daemon.
+    - name: FILES_URL
+      value: "http://dify-api:5001"
     - name: VECTOR_STORE
       value: "qdrant"
     - name: QDRANT_URL
@@ -112,6 +121,10 @@ postgresql:
         postgresPassword: "difyai123456"
         replicationPassword: "difyai123456"
         database: "dify"
+  # Avoid "too many clients already" from api/worker/replicas (Bitnami subchart)
+  primary:
+    extendedConfiguration: |
+      max_connections = 200
 
 redis:
   enabled: true

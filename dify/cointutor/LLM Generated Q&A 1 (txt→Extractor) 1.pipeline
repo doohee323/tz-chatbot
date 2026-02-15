@@ -1,0 +1,1425 @@
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.7.4@5faf411e694e0da130a337347a625a3812b1b7502a0183382d66d92c841bf05a
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/qa_chunk:0.0.8@1fed9644646bdd48792cdf5a1d559a3df336bd3a8edb0807227499fb56dce3af
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/notion_datasource:0.1.12@2855c4a7cffd3311118ebe70f095e546f99935e47f12c841123146f728534f55
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/google_drive:0.1.6@4bc0cf8f8979ebd7321b91506b4bc8f090b05b769b5d214f2da4ce4c04ce30bd
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/jina_datasource:0.0.5@75942f5bbde870ad28e0345ff5ebf54ebd3aec63f0e66344ef76b88cf06b85c3
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/firecrawl_datasource:0.2.4@37b490ebc52ac30d1c6cbfa538edcddddcfed7d5f5de58982edbd4e2094eb6e2
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/dify_extractor:0.0.5@ba7e2fd9165eda73bfcc68e31a108855197e88706e5556c058e0777ab08409b3
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: bowenliang123/md_exporter:2.0.0@13e1aca1995328e41c080ff9f7f6d898df60ff74a3f4d98d6de4b18ab5b92c2e
+    version: null
+kind: rag_pipeline
+rag_pipeline:
+  description: ''
+  icon: 📙
+  icon_background: '#FFF4ED'
+  icon_type: emoji
+  icon_url: null
+  name: LLM Generated Q&A 1 (txt→Extractor) 1
+version: 0.1.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features: {}
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1750836391776-source-1753346901505-target
+      selected: false
+      source: '1750836391776'
+      sourceHandle: source
+      target: '1753346901505'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: document-extractor
+        targetType: variable-aggregator
+      id: 1753349228522-source-1753346901505-target
+      selected: false
+      source: '1753349228522'
+      sourceHandle: source
+      target: '1753346901505'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: datasource
+        targetType: variable-aggregator
+      id: 1754023419266-source-1753346901505-target
+      selected: false
+      source: '1754023419266'
+      sourceHandle: source
+      target: '1753346901505'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: datasource
+        targetType: variable-aggregator
+      id: 1756442998557-source-1756442986174-target
+      selected: false
+      source: '1756442998557'
+      sourceHandle: source
+      target: '1756442986174'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: variable-aggregator
+        targetType: if-else
+      id: 1756442986174-source-1756443014860-target
+      selected: false
+      source: '1756442986174'
+      sourceHandle: source
+      target: '1756443014860'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: datasource
+        targetType: variable-aggregator
+      id: 1750836380067-source-1756442986174-target
+      selected: false
+      source: '1750836380067'
+      sourceHandle: source
+      target: '1756442986174'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1756443014860-true-1750836391776-target
+      selected: false
+      source: '1756443014860'
+      sourceHandle: 'true'
+      target: '1750836391776'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: document-extractor
+      id: 1756443014860-false-1753349228522-target
+      selected: false
+      source: '1756443014860'
+      sourceHandle: 'false'
+      target: '1753349228522'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: datasource
+        targetType: variable-aggregator
+      id: 1756896212061-source-1753346901505-target
+      source: '1756896212061'
+      sourceHandle: source
+      target: '1753346901505'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: datasource
+        targetType: variable-aggregator
+      id: 1756907397615-source-1753346901505-target
+      source: '1756907397615'
+      sourceHandle: source
+      target: '1753346901505'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: variable-aggregator
+        targetType: llm
+      id: 1753346901505-source-1756912504019-target
+      source: '1753346901505'
+      sourceHandle: source
+      target: '1756912504019'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: tool
+      id: 1756912504019-source-1756912537172-target
+      source: '1756912504019'
+      sourceHandle: source
+      target: '1756912537172'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: tool
+      id: 1756912537172-source-1756912274158-target
+      source: '1756912537172'
+      sourceHandle: source
+      target: '1756912274158'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: knowledge-index
+      id: 1756912274158-source-1750836372241-target
+      source: '1756912274158'
+      sourceHandle: source
+      target: '1750836372241'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        chunk_structure: qa_model
+        embedding_model: gemini-embedding-001
+        embedding_model_provider: langgenius/gemini/google
+        index_chunk_variable_selector:
+        - '1756912274158'
+        - result
+        indexing_technique: high_quality
+        keyword_number: 10
+        retrieval_model:
+          hybridSearchMode: weighted_score
+          reranking_enable: false
+          score_threshold: 0.5
+          score_threshold_enabled: false
+          search_method: semantic_search
+          top_k: 3
+          vector_setting:
+            embedding_model_name: jina-embeddings-v2-base-en
+            embedding_provider_name: langgenius/jina/jina
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: gemini-embedding-001
+              embedding_provider_name: langgenius/gemini/google
+              vector_weight: 0.7
+        selected: false
+        title: Knowledge Base
+        type: knowledge-index
+      height: 114
+      id: '1750836372241'
+      position:
+        x: 1150.8369138826617
+        y: 326
+      positionAbsolute:
+        x: 1150.8369138826617
+        y: 326
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        datasource_configurations: {}
+        datasource_label: File
+        datasource_name: upload-file
+        datasource_parameters: {}
+        fileExtensions:
+        - txt
+        - markdown
+        - mdx
+        - pdf
+        - html
+        - xlsx
+        - xls
+        - vtt
+        - properties
+        - doc
+        - docx
+        - csv
+        - eml
+        - msg
+        - pptx
+        - xml
+        - epub
+        - ppt
+        - md
+        plugin_id: langgenius/file
+        provider_name: file
+        provider_type: local_file
+        selected: false
+        title: File
+        type: datasource
+      height: 52
+      id: '1750836380067'
+      position:
+        x: -1371.6520723158733
+        y: 224.87938381325645
+      positionAbsolute:
+        x: -1371.6520723158733
+        y: 224.87938381325645
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        output_schema:
+          properties:
+            documents:
+              description: the documents extracted from the file
+              items:
+                type: object
+              type: array
+            images:
+              description: The images extracted from the file
+              items:
+                type: object
+              type: array
+          type: object
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: the file to be parsed(support pdf, ppt, pptx, doc, docx, png, jpg,
+              jpeg)
+            ja_JP: the file to be parsed(support pdf, ppt, pptx, doc, docx, png, jpg,
+              jpeg)
+            pt_BR: o arquivo a ser analisado (suporta pdf, ppt, pptx, doc, docx, png,
+              jpg, jpeg)
+            zh_Hans: 用于解析的文件(支持 pdf, ppt, pptx, doc, docx, png, jpg, jpeg)
+          label:
+            en_US: file
+            ja_JP: file
+            pt_BR: file
+            zh_Hans: file
+          llm_description: the file to be parsed (support pdf, ppt, pptx, doc, docx,
+            png, jpg, jpeg)
+          max: null
+          min: null
+          name: file
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: file
+        params:
+          file: ''
+        provider_id: langgenius/dify_extractor/dify_extractor
+        provider_name: langgenius/dify_extractor/dify_extractor
+        provider_type: builtin
+        selected: false
+        title: Dify Extractor
+        tool_configurations: {}
+        tool_description: Dify Extractor
+        tool_label: Dify Extractor
+        tool_name: dify_extractor
+        tool_node_version: '2'
+        tool_parameters:
+          file:
+            type: variable
+            value:
+            - '1756442986174'
+            - output
+        type: tool
+      height: 52
+      id: '1750836391776'
+      position:
+        x: -417.5334221022782
+        y: 268.1692071834485
+      positionAbsolute:
+        x: -417.5334221022782
+        y: 268.1692071834485
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        author: TenTen
+        desc: ''
+        height: 252
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"A
+          ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"","text":"Knowledge
+          Pipeline","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"
+          starts with Data Source as the starting node and ends with the knowledge
+          base node. The general steps are: import documents from the data source
+          → use extractor to extract document content → split and clean content into
+          structured chunks → store in the knowledge base.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"The
+          user input variables required by the Knowledge Pipeline node must be predefined
+          and managed via the Input Field section located in the top-right corner
+          of the orchestration canvas. It determines what input fields the end users
+          will see and need to fill in when importing files to the knowledge base
+          through this pipeline.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"Unique
+          Inputs: Input fields defined here are only available to the selected data
+          source and its downstream nodes.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"Global
+          Inputs: These input fields are shared across all subsequent nodes after
+          the data source and are typically set during the Process Documents step.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"For
+          more information, see ","type":"text","version":1},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"https://docs.dify.ai/en/guides/knowledge-base/knowledge-pipeline/knowledge-pipeline-orchestration","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"link","version":1,"rel":"noreferrer","target":null,"title":null,"url":"https://docs.dify.ai/en/guides/knowledge-base/knowledge-pipeline/knowledge-pipeline-orchestration"},{"detail":0,"format":0,"mode":"normal","style":"","text":".","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 1124
+      height: 252
+      id: '1751252161631'
+      position:
+        x: -1371.6520723158733
+        y: -123.758428116601
+      positionAbsolute:
+        x: -1371.6520723158733
+        y: -123.758428116601
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 1124
+    - data:
+        author: TenTen
+        desc: ''
+        height: 388
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"Currently
+          we support 4 types of ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"","text":"Data
+          Sources","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":":
+          File Upload, Online Drive, Online Doc, and Web Crawler. Different types
+          of Data Sources have different input and output types. The output of File
+          Upload and Online Drive are files, while the output of Online Doc and WebCrawler
+          are pages. You can find more Data Sources on our Marketplace.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"A
+          Knowledge Pipeline can have multiple data sources. Each data source can
+          be selected more than once with different settings. Each added data source
+          is a tab on the add file interface. However, each time the user can only
+          select one data source to import the file and trigger its subsequent processing.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 285
+      height: 388
+      id: '1751252440357'
+      position:
+        x: -1723.9942193415582
+        y: 224.87938381325645
+      positionAbsolute:
+        x: -1723.9942193415582
+        y: 224.87938381325645
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 285
+    - data:
+        author: TenTen
+        desc: ''
+        height: 430
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"A
+          document extractor in Retrieval-Augmented Generation (RAG) is a tool or
+          component that automatically identifies, extracts, and structures text and
+          data from various types of documents—such as PDFs, images, scanned files,
+          handwritten notes, and more—into a format that can be effectively used by
+          language models within RAG Pipeline.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":1,"mode":"normal","style":"","text":"Dify
+          Extractor","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":" is
+          a built-in document parser developed by Dify. It supports a wide range of
+          common file formats and offers specialized handling for certain formats,
+          such as ","type":"text","version":1},{"detail":0,"format":16,"mode":"normal","style":"","text":".docx","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":".
+          In addition to text extraction, it can extract images embedded within documents,
+          store them, and return their accessible URLs.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":""}],"direction":"ltr","format":"","indent":0,"type":"root","version":1,"textFormat":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 240
+      height: 430
+      id: '1751253091602'
+      position:
+        x: -417.5334221022782
+        y: 546.5283142529594
+      positionAbsolute:
+        x: -417.5334221022782
+        y: 546.5283142529594
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 240
+    - data:
+        author: TenTen
+        desc: ''
+        height: 336
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":1,"mode":"normal","style":"","text":"Q&A
+          Processor","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":" extracts
+          specified columns from tables to generate structured Q&A pairs. Users can
+          independently designate which columns to use for questions and which for
+          answers.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"These
+          pairs are indexed by the question field, so user queries are matched directly
+          against the questions to retrieve the corresponding answers. This ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"","text":"Q-to-Q","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":" matching
+          strategy improves clarity and precision, especially in scenarios involving
+          high-frequency or highly similar user questions.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":"ltr","format":"","indent":0,"type":"root","version":1,"textFormat":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 240
+      height: 336
+      id: '1751253953926'
+      position:
+        x: 794.2003154321724
+        y: 417.25474169825833
+      positionAbsolute:
+        x: 794.2003154321724
+        y: 417.25474169825833
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 240
+    - data:
+        author: TenTen
+        desc: ''
+        height: 410
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"The
+          knowledge base provides two indexing methods: ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"","text":"High-Quality","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":" and ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"","text":"Economical","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":",
+          each with different retrieval strategies. High-Quality mode uses embeddings
+          for vectorization and supports vector, full-text, and hybrid retrieval,
+          offering more accurate results but higher resource usage. Economical mode
+          uses keyword-based inverted indexing with no token consumption but lower
+          accuracy; upgrading to High-Quality is possible, but downgrading requires
+          creating a new knowledge base.","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":1,"mode":"normal","style":"","text":"*
+          Parent-Child Mode","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":" and ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"","text":"Q&A
+          Mode","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":" only
+          support the ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"","text":"High-Quality","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":" indexing
+          method.","type":"text","version":1}],"direction":"ltr","format":"start","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":""}],"direction":"ltr","format":"","indent":0,"type":"root","version":1,"textFormat":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 240
+      height: 410
+      id: '1751254117904'
+      position:
+        x: 1150.8369138826617
+        y: 475.88970282568215
+      positionAbsolute:
+        x: 1150.8369138826617
+        y: 475.88970282568215
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 240
+    - data:
+        output_type: string
+        selected: false
+        title: Variable Aggregator
+        type: variable-aggregator
+        variables:
+        - - '1750836391776'
+          - text
+        - - '1753349228522'
+          - text
+        - - '1754023419266'
+          - content
+        - - '1756896212061'
+          - content
+      height: 187
+      id: '1753346901505'
+      position:
+        x: -117.24452412456148
+        y: 326
+      positionAbsolute:
+        x: -117.24452412456148
+        y: 326
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_array_file: false
+        selected: false
+        title: Doc Extractor
+        type: document-extractor
+        variable_selector:
+        - '1756442986174'
+        - output
+      height: 104
+      id: '1753349228522'
+      position:
+        x: -417.5334221022782
+        y: 417.25474169825833
+      positionAbsolute:
+        x: -417.5334221022782
+        y: 417.25474169825833
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        datasource_configurations: {}
+        datasource_label: Notion
+        datasource_name: notion_datasource
+        datasource_parameters: {}
+        plugin_id: langgenius/notion_datasource
+        provider_name: notion_datasource
+        provider_type: online_document
+        selected: false
+        title: Notion
+        type: datasource
+      height: 52
+      id: '1754023419266'
+      position:
+        x: -1369.6904698303242
+        y: 440.01452302398053
+      positionAbsolute:
+        x: -1369.6904698303242
+        y: 440.01452302398053
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        output_type: file
+        selected: false
+        title: Variable Aggregator
+        type: variable-aggregator
+        variables:
+        - - '1750836380067'
+          - file
+        - - '1756442998557'
+          - file
+      height: 135
+      id: '1756442986174'
+      position:
+        x: -1067.06980963949
+        y: 236.10252072775984
+      positionAbsolute:
+        x: -1067.06980963949
+        y: 236.10252072775984
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        datasource_configurations: {}
+        datasource_label: Google Drive
+        datasource_name: google_drive
+        datasource_parameters: {}
+        plugin_id: langgenius/google_drive
+        provider_name: google_drive
+        provider_type: online_drive
+        selected: false
+        title: Google Drive
+        type: datasource
+      height: 52
+      id: '1756442998557'
+      position:
+        x: -1371.6520723158733
+        y: 326
+      positionAbsolute:
+        x: -1371.6520723158733
+        y: 326
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            id: 1581dd11-7898-41f4-962f-937283ba7e01
+            value: .xlsx
+            varType: string
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 92abb46d-d7e4-46e7-a5e1-8a29bb45d528
+            value: .xls
+            varType: string
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 1dde5ae7-754d-4e83-96b2-fe1f02995d8b
+            value: .md
+            varType: string
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 7e1a80e5-c32a-46a4-8f92-8912c64972aa
+            value: .markdown
+            varType: string
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 53abfe95-c7d0-4f63-ad37-17d425d25106
+            value: .mdx
+            varType: string
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 436877b8-8c0a-4cc6-9565-92754db08571
+            value: .html
+            varType: file
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 5e3e375e-750b-4204-8ac3-9a1174a5ab7c
+            value: .htm
+            varType: file
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 1a84a784-a797-4f96-98a0-33a9b48ceb2b
+            value: .docx
+            varType: file
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: 62d11445-876a-493f-85d3-8fc020146bdd
+            value: .csv
+            varType: file
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          - comparison_operator: is
+            id: a1b2c3d4-5e6f-7890-abcd-txt001ext
+            value: .txt
+            varType: string
+            variable_selector:
+            - '1756442986174'
+            - output
+            - extension
+          id: 'true'
+          logical_operator: or
+        selected: false
+        title: IF/ELSE
+        type: if-else
+      height: 358
+      id: '1756443014860'
+      position:
+        x: -733.5977815139424
+        y: 236.10252072775984
+      positionAbsolute:
+        x: -733.5977815139424
+        y: 236.10252072775984
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        datasource_configurations: {}
+        datasource_label: Jina Reader
+        datasource_name: jina_reader
+        datasource_parameters:
+          crawl_sub_pages:
+            type: variable
+            value:
+            - rag
+            - '1756896212061'
+            - jina_subpages
+          limit:
+            type: variable
+            value:
+            - rag
+            - '1756896212061'
+            - jina_limit
+          url:
+            type: mixed
+            value: '{{#rag.1756896212061.jina_url#}}'
+          use_sitemap:
+            type: variable
+            value:
+            - rag
+            - '1756896212061'
+            - jian_sitemap
+        plugin_id: langgenius/jina_datasource
+        provider_name: jinareader
+        provider_type: website_crawl
+        selected: false
+        title: Jina Reader
+        type: datasource
+      height: 52
+      id: '1756896212061'
+      position:
+        x: -1371.6520723158733
+        y: 538.9988445953813
+      positionAbsolute:
+        x: -1371.6520723158733
+        y: 538.9988445953813
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        datasource_configurations: {}
+        datasource_label: Firecrawl
+        datasource_name: crawl
+        datasource_parameters:
+          crawl_subpages:
+            type: variable
+            value:
+            - rag
+            - '1756907397615'
+            - firecrawl_subpages
+          exclude_paths:
+            type: mixed
+            value: '{{#rag.1756907397615.exclude_paths#}}'
+          include_paths:
+            type: mixed
+            value: '{{#rag.1756907397615.include_paths#}}'
+          limit:
+            type: variable
+            value:
+            - rag
+            - '1756907397615'
+            - max_pages
+          max_depth:
+            type: variable
+            value:
+            - rag
+            - '1756907397615'
+            - max_depth
+          only_main_content:
+            type: variable
+            value:
+            - rag
+            - '1756907397615'
+            - main_content
+          url:
+            type: mixed
+            value: '{{#rag.1756907397615.firecrawl_url1#}}'
+        plugin_id: langgenius/firecrawl_datasource
+        provider_name: firecrawl
+        provider_type: website_crawl
+        selected: false
+        title: Firecrawl
+        type: datasource
+      height: 52
+      id: '1756907397615'
+      position:
+        x: -1371.6520723158733
+        y: 644.3296146102903
+      positionAbsolute:
+        x: -1371.6520723158733
+        y: 644.3296146102903
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: The file you want to extract QA from.
+            ja_JP: The file you want to extract QA from.
+            pt_BR: The file you want to extract QA from.
+            zh_Hans: 你想要提取 QA 的文件。
+          label:
+            en_US: Input File
+            ja_JP: Input File
+            pt_BR: Input File
+            zh_Hans: 输入文件
+          llm_description: The file you want to extract QA from.
+          max: null
+          min: null
+          name: input_file
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: file
+        - auto_generate: null
+          default: 0
+          form: llm
+          human_description:
+            en_US: Column number for question.
+            ja_JP: Column number for question.
+            pt_BR: Column number for question.
+            zh_Hans: 问题所在的列。
+          label:
+            en_US: Column number for question
+            ja_JP: Column number for question
+            pt_BR: Column number for question
+            zh_Hans: 问题所在的列
+          llm_description: The column number for question, the format of the column
+            number must be an integer.
+          max: null
+          min: null
+          name: question_column
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: number
+        - auto_generate: null
+          default: 1
+          form: llm
+          human_description:
+            en_US: Column number for answer.
+            ja_JP: Column number for answer.
+            pt_BR: Column number for answer.
+            zh_Hans: 答案所在的列。
+          label:
+            en_US: Column number for answer
+            ja_JP: Column number for answer
+            pt_BR: Column number for answer
+            zh_Hans: 答案所在的列
+          llm_description: The column number for answer, the format of the column
+            number must be an integer.
+          max: null
+          min: null
+          name: answer_column
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: number
+        params:
+          answer_column: ''
+          input_file: ''
+          question_column: ''
+        provider_id: langgenius/qa_chunk/qa_chunk
+        provider_name: langgenius/qa_chunk/qa_chunk
+        provider_type: builtin
+        selected: false
+        title: Q&A Processor
+        tool_configurations: {}
+        tool_description: A tool for QA chunking mode.
+        tool_label: QA Chunk
+        tool_name: qa_chunk
+        tool_node_version: '2'
+        tool_parameters:
+          answer_column:
+            type: constant
+            value: 2
+          input_file:
+            type: variable
+            value:
+            - '1756912537172'
+            - files
+          question_column:
+            type: constant
+            value: 1
+        type: tool
+      height: 52
+      id: '1756912274158'
+      position:
+        x: 794.2003154321724
+        y: 326
+      positionAbsolute:
+        x: 794.2003154321724
+        y: 326
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: langgenius/gemini/google
+        prompt_template:
+        - id: 7f8105aa-a37d-4f5a-b581-babeeb31e833
+          role: system
+          text: '
+
+            Document content to use (if empty, respond with exactly: No document content
+            provided.):
+
+            {{#1750836391776.text#}}
+
+            (End of document. If nothing appears above, respond only: No document
+            content provided.)
+
+            Generate a list of Q&A pairs based on the document content above. Present
+            the output as a Markdown table, where the first column is serial number,
+            the second column is Question, and the third column is Question. Ensure
+            that the table format can be easily converted into a CSV file.
+
+            Example Output Format:
+
+            | Index | Question | Answer |
+
+            |-------|-----------|--------|
+
+            | 1     | What is the main purpose of the document? | The document explains
+            the company''s new product launch strategy. ![image](https://cloud.dify.ai/files/xxxxxxx)
+            |
+
+            | 2     || When will the product be launched? | The product will be launched
+            in Q3 of this year. |
+
+
+            Instructions:
+
+            Read and understand the input text.
+
+            Extract key information and generate meaningful questions and answers.
+
+            Preserve any ![image] URLs from the input text in the answers.
+
+            Keep questions concise and specific.
+
+            Ensure answers are accurate, self-contained, and clear.
+
+            Output only the Markdown table without any extra explanation.'
+        - id: a0b1c2d3-user-msg-for-contents
+          role: user
+          text: Generate the Q&A table from the document content in the system message
+            above.
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1756912504019'
+      position:
+        x: 184.46657789772178
+        y: 326
+      positionAbsolute:
+        x: 184.46657789772178
+        y: 326
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Markdown text
+            ja_JP: Markdown text
+            pt_BR: Markdown text
+            zh_Hans: Markdown格式文本，必须为Markdown表格格式
+          label:
+            en_US: Markdown text
+            ja_JP: Markdown text
+            pt_BR: Markdown text
+            zh_Hans: Markdown格式文本
+          llm_description: ''
+          max: null
+          min: null
+          name: md_text
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Filename of the output file
+            ja_JP: Filename of the output file
+            pt_BR: Filename of the output file
+            zh_Hans: 输出文件名
+          label:
+            en_US: Filename of the output file
+            ja_JP: Filename of the output file
+            pt_BR: Filename of the output file
+            zh_Hans: 输出文件名
+          llm_description: ''
+          max: null
+          min: null
+          name: output_filename
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        params:
+          md_text: ''
+          output_filename: ''
+        provider_id: bowenliang123/md_exporter/md_exporter
+        provider_name: bowenliang123/md_exporter/md_exporter
+        provider_type: builtin
+        selected: false
+        title: Markdown to CSV file
+        tool_configurations: {}
+        tool_description: Generate CSV file from Markdown text
+        tool_label: Markdown to CSV file
+        tool_name: md_to_csv
+        tool_node_version: '2'
+        tool_parameters:
+          md_text:
+            type: mixed
+            value: '{{#1756912504019.text#}}'
+          output_filename:
+            type: mixed
+            value: LLM Generated Q&A
+        type: tool
+      height: 52
+      id: '1756912537172'
+      position:
+        x: 484.75465419110174
+        y: 326
+      positionAbsolute:
+        x: 484.75465419110174
+        y: 326
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        author: TenTen
+        desc: ''
+        height: 174
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"The
+          LLM-generated Q&A pairs are designed to extract key information from the
+          input text and present it in a structured, easy-to-use format. Each pair
+          consists of a concise question that captures an important point or detail,
+          and a clear, self-contained answer that provides the relevant information
+          without requiring additional context. The output is formatted as a Markdown
+          table with three columns—Index, Question, and Answer—so that it can be easily
+          converted into a CSV file for further processing. ","type":"text","version":1}],"direction":"ltr","format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 528
+      height: 174
+      id: '1756912556940'
+      position:
+        x: 184.46657789772178
+        y: 462.64405262857747
+      positionAbsolute:
+        x: 184.46657789772178
+        y: 462.64405262857747
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 528
+    viewport:
+      x: -32.603291057794195
+      y: 243.40744043995753
+      zoom: 0.4911032886685182
+  rag_pipeline_variables:
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1753688365254'
+    default_value: null
+    label: URL
+    max_length: 256
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: text-input
+    unit: null
+    variable: jina_reader_url
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1753688365254'
+    default_value: 10
+    label: Limit
+    max_length: 48
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: number
+    unit: pages
+    variable: jina_reader_imit
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1753688365254'
+    default_value: true
+    label: Crawl sub-pages
+    max_length: 48
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: checkbox
+    unit: null
+    variable: Crawl_sub_pages_2
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1753688365254'
+    default_value: true
+    label: Use sitemap
+    max_length: 48
+    options: []
+    placeholder: null
+    required: false
+    tooltips: null
+    type: checkbox
+    unit: null
+    variable: Use_sitemap
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756896212061'
+    default_value: null
+    label: URL
+    max_length: 256
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: text-input
+    unit: null
+    variable: jina_url
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756896212061'
+    default_value: 10
+    label: Limit
+    max_length: 48
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: number
+    unit: pages
+    variable: jina_limit
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756896212061'
+    default_value: true
+    label: Use sitemap
+    max_length: 48
+    options: []
+    placeholder: null
+    required: false
+    tooltips: Follow the sitemap to crawl the site. If not, Jina Reader will crawl
+      iteratively based on page relevance, yielding fewer but higher-quality pages.
+    type: checkbox
+    unit: null
+    variable: jian_sitemap
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756896212061'
+    default_value: true
+    label: Crawl subpages
+    max_length: 48
+    options: []
+    placeholder: null
+    required: false
+    tooltips: null
+    type: checkbox
+    unit: null
+    variable: jina_subpages
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: null
+    label: URL
+    max_length: 256
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: text-input
+    unit: null
+    variable: firecrawl_url1
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: true
+    label: firecrawl_subpages
+    max_length: 48
+    options: []
+    placeholder: null
+    required: false
+    tooltips: null
+    type: checkbox
+    unit: null
+    variable: firecrawl_subpages
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: null
+    label: Exclude paths
+    max_length: 256
+    options: []
+    placeholder: blog/*,/about/*
+    required: false
+    tooltips: null
+    type: text-input
+    unit: null
+    variable: exclude_paths
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: null
+    label: include_paths
+    max_length: 256
+    options: []
+    placeholder: articles/*
+    required: false
+    tooltips: null
+    type: text-input
+    unit: null
+    variable: include_paths
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: 0
+    label: Max depth
+    max_length: 48
+    options: []
+    placeholder: null
+    required: false
+    tooltips: Maximum depth to crawl relative to the entered URL. Depth 0 just scrapes
+      the page of the entered url, depth 1 scrapes the url and everything after enteredURL
+      + one /, and so on.
+    type: number
+    unit: null
+    variable: max_depth
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: 10
+    label: Limit
+    max_length: 48
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: number
+    unit: null
+    variable: max_pages
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: true
+    label: Extract only main content (no headers, navs, footers, etc.)
+    max_length: 48
+    options: []
+    placeholder: null
+    required: false
+    tooltips: null
+    type: checkbox
+    unit: null
+    variable: main_content
+  - allow_file_extension: null
+    allow_file_upload_methods: null
+    allowed_file_types: null
+    belong_to_node_id: '1756907397615'
+    default_value: null
+    label: depthtest
+    max_length: 48
+    options: []
+    placeholder: null
+    required: true
+    tooltips: null
+    type: number
+    unit: null
+    variable: depthtest
