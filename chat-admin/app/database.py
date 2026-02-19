@@ -27,10 +27,14 @@ def _migrate_admin_users(sync_conn):
         pass
 
 
-def _migrate_chat_systems(sync_conn):
-    """Add columns to chat_systems for existing DBs. Use savepoint per step so one failure doesn't abort the whole transaction."""
-    import logging
+def _run_one_alter(sync_conn, stmt):
     from sqlalchemy import text
+    sync_conn.execute(text(stmt))
+
+
+async def _migrate_chat_systems_separate():
+    """Add columns to chat_systems in separate transactions so one failure doesn't abort the rest."""
+    import logging
     log = logging.getLogger("chat_admin.migrate")
     steps = [
         ("dify_chatbot_token", "ALTER TABLE chat_systems ADD COLUMN IF NOT EXISTS dify_chatbot_token VARCHAR(128) DEFAULT ''"),
@@ -38,16 +42,10 @@ def _migrate_chat_systems(sync_conn):
         ("chat_api_url", "ALTER TABLE chat_systems ADD COLUMN IF NOT EXISTS chat_api_url VARCHAR(512) DEFAULT ''"),
     ]
     for name, stmt in steps:
-        savepoint = f"migrate_chat_systems_{name}"
         try:
-            sync_conn.execute(text(f"SAVEPOINT {savepoint}"))
-            sync_conn.execute(text(stmt))
-            sync_conn.execute(text(f"RELEASE SAVEPOINT {savepoint}"))
+            async with engine.begin() as conn:
+                await conn.run_sync(lambda c: _run_one_alter(c, stmt))
         except Exception as e:
-            try:
-                sync_conn.execute(text(f"ROLLBACK TO SAVEPOINT {savepoint}"))
-            except Exception:
-                pass
             log.warning("Migration step skipped (may already be applied): chat_systems.%s: %s", name, e)
 
 
@@ -56,7 +54,7 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(_migrate_admin_users)
-        await conn.run_sync(_migrate_chat_systems)
+    await _migrate_chat_systems_separate()
 
 
 async def get_db() -> AsyncSession:
