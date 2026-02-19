@@ -971,11 +971,11 @@ deploy_to_kubernetes() {
         log_info "🔄 Running chat-admin schema migration (init_db) before rollout..."
         CHAT_ADMIN_IMAGE=$(kubectl -n ${NAMESPACE} get deployment ${DEPLOYMENT_NAME} -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "doohee323/chat-admin:${BUILD_NUMBER}")
         MIGRATE_OVERRIDES="{\"spec\":{\"containers\":[{\"name\":\"migrate\",\"image\":\"${CHAT_ADMIN_IMAGE}\",\"envFrom\":[{\"configMapRef\":{\"name\":\"chat-admin-configmap-${SECRET_SUFFIX}\"}},{\"secretRef\":{\"name\":\"chat-admin-secret-${SECRET_SUFFIX}\"}}],\"command\":[\"python\",\"-c\",\"import asyncio; from app.database import init_db; asyncio.run(init_db())\"]}]}}"
-        if kubectl run -n ${NAMESPACE} chat-admin-migrate-$$ --rm -i --restart=Never --image="${CHAT_ADMIN_IMAGE}" --overrides="${MIGRATE_OVERRIDES}" 2>/dev/null; then
-            log_info "  ✅ init_db completed"
-        else
-            log_warning "  init_db failed (tables may already exist)"
+        if ! kubectl run -n ${NAMESPACE} chat-admin-migrate-$$ --rm -i --restart=Never --image="${CHAT_ADMIN_IMAGE}" --overrides="${MIGRATE_OVERRIDES}"; then
+            log_error "❌ init_db failed. Fix DB migration or schema then re-run deploy."
+            exit 1
         fi
+        log_info "  ✅ init_db completed"
 
         # Wait for deployment to be ready
         kubectl -n ${NAMESPACE} rollout status deployment/${DEPLOYMENT_NAME} --timeout=300s

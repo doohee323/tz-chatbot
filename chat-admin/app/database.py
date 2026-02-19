@@ -28,20 +28,19 @@ def _migrate_admin_users(sync_conn):
 
 
 def _migrate_chat_systems(sync_conn):
-    """Add dify_chatbot_token to chat_systems (existing DBs). api_key column left for compat, not used."""
+    """Add columns to chat_systems for existing DBs. Use IF NOT EXISTS so migration is idempotent."""
+    import logging
     from sqlalchemy import text
-    try:
-        sync_conn.execute(text("ALTER TABLE chat_systems ADD COLUMN dify_chatbot_token VARCHAR(128) DEFAULT ''"))
-    except Exception:
-        pass
-    try:
-        sync_conn.execute(text("ALTER TABLE chat_systems ADD COLUMN created_by VARCHAR(64)"))
-    except Exception:
-        pass
-    try:
-        sync_conn.execute(text("ALTER TABLE chat_systems ADD COLUMN chat_api_url VARCHAR(512) DEFAULT ''"))
-    except Exception:
-        pass
+    log = logging.getLogger("chat_admin.migrate")
+    for stmt in [
+        "ALTER TABLE chat_systems ADD COLUMN IF NOT EXISTS dify_chatbot_token VARCHAR(128) DEFAULT ''",
+        "ALTER TABLE chat_systems ADD COLUMN IF NOT EXISTS created_by VARCHAR(64)",
+        "ALTER TABLE chat_systems ADD COLUMN IF NOT EXISTS chat_api_url VARCHAR(512) DEFAULT ''",
+    ]:
+        try:
+            sync_conn.execute(text(stmt))
+        except Exception as e:
+            log.warning("Migration step skipped (may already be applied): %s", e)
 
 
 async def init_db():
