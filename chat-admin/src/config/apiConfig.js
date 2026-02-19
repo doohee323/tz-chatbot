@@ -8,8 +8,14 @@ const API_BASE = process.env.VUE_APP_API_BASE || ''
 const _chatUrl = (process.env.VUE_APP_CHAT_GATEWAY_URL || '').replace(/\/$/, '')
 const _fromEnv = _chatUrl && !_chatUrl.includes('PLACEHOLDER')
 const CHAT_GATEWAY_URL = _fromEnv ? _chatUrl : (() => {
-  // Fallback: derive from current host (chat-admin.drillquiz.com → https://chat.drillquiz.com)
-  if (typeof window !== 'undefined' && window.location?.hostname?.includes('chat-admin')) {
+  if (typeof window === 'undefined' || !window.location) return ''
+  const origin = window.location.origin || ''
+  // Admin on localhost:8000 → chat API on gateway localhost:8088 (no backend proxy)
+  if (origin === 'http://localhost:8000' || origin === 'http://127.0.0.1:8000') {
+    return 'http://localhost:8088'
+  }
+  // Production: chat-admin.drillquiz.com → https://chat.drillquiz.com
+  if (window.location.hostname?.includes('chat-admin')) {
     const host = window.location.hostname.replace(/^chat-admin/, 'chat')
     return `${window.location.protocol}//${host}`
   }
