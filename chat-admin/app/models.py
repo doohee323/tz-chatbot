@@ -14,6 +14,7 @@ class ChatSystem(Base):
     dify_base_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     dify_api_key: Mapped[str] = mapped_column(String(256), nullable=False, default="")
     dify_chatbot_token: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    chat_api_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")  # Backend API for chat (gateway/inference). Empty = fallback to global.
     allowed_origins: Mapped[str] = mapped_column(String(1024), nullable=False, default="")
     enabled: Mapped[bool] = mapped_column(nullable=False, default=True)
     created_by: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)  # admin username who created

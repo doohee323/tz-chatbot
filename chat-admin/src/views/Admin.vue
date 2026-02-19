@@ -51,7 +51,7 @@
     <div class="messages-box">
       <h3>{{ $t('admin.messages') }}: {{ selectedConv.name || selectedConv.conversation_id }}</h3>
       <div v-for="m in messages" :key="m.message_id" :class="['message', 'msg-' + m.role]">
-        <strong>{{ m.role === 'user' ? $t('admin.msgUser') : $t('admin.msgBot') }}</strong> {{ formatDate(m.created_at) }}<br>
+        {{ formatDate(m.created_at) }}<br>
         {{ m.content }}
       </div>
     </div>

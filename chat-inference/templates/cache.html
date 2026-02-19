@@ -130,7 +130,7 @@
         messagesBox.style.display = 'block';
         messagesList.innerHTML = data.length ? data.map(m => `
           <div class="message msg-${m.role}">
-            <strong>${m.role === 'user' ? 'User' : 'Bot'}</strong> ${m.created_at ? formatDate(m.created_at) : ''}<br>
+            ${m.created_at ? formatDate(m.created_at) : ''}<br>
             ${escapeHtml(m.content || '')}
           </div>
         `).join('') : '<p class="empty">No messages.</p>';

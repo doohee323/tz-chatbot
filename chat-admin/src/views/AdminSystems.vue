@@ -27,6 +27,13 @@
           <input v-model="form.dify_base_url" type="text" required placeholder="https://dify.drillquiz.com" />
         </div>
         <div class="form-row">
+          <label>Chat API URL</label>
+          <div class="form-field">
+            <input v-model="form.chat_api_url" type="text" placeholder="https://gateway.example.com or http://localhost:8088" />
+            <span class="hint">Backend API for /v1/chat, /v1/conversations. Empty = use global default.</span>
+          </div>
+        </div>
+        <div class="form-row">
           <label>{{ $t('systems.difyApp') }}</label>
           <div class="form-field">
             <a :href="difyAppsUrl" target="_blank" rel="noopener noreferrer" class="dify-apps-link">
@@ -110,6 +117,7 @@
             <th>System ID</th>
             <th>{{ $t('systems.displayName') }}</th>
             <th>Dify URL</th>
+            <th>Chat API URL</th>
             <th>Chatbot Token</th>
             <th>{{ $t('systems.active') }}</th>
             <th>{{ $t('systems.manage') }}</th>
@@ -120,6 +128,7 @@
             <td>{{ s.system_id }}</td>
             <td>{{ s.display_name || '-' }}</td>
             <td class="url-cell">{{ s.dify_base_url || '-' }}</td>
+            <td class="url-cell">{{ s.chat_api_url || '-' }}</td>
             <td class="key-cell">{{ maskKey(s.dify_chatbot_token) }}</td>
             <td>{{ s.enabled ? 'Y' : 'N' }}</td>
             <td>
@@ -189,6 +198,7 @@
             :chat-system-id="testChatSystemId"
             :chat-user-id="testChatUserId"
             :chat-lang="$i18n.locale"
+            :chat-api-base="testChatApiBase"
             in-modal
           />
         </div>
@@ -219,6 +229,7 @@ export default {
         dify_base_url: '',
         dify_api_key: '',
         dify_chatbot_token: '',
+        chat_api_url: '',
         allowed_origins: '',
         enabled: true
       },
@@ -229,6 +240,7 @@ export default {
       testChatToken: '',
       testChatSystemId: '',
       testChatUserId: '',
+      testChatApiBase: '',
       uploadFile: null,
       uploading: false,
       ragFiles: [],
@@ -301,6 +313,7 @@ export default {
         this.testChatToken = token
         this.testChatSystemId = s.system_id
         this.testChatUserId = 'admin_test'
+        this.testChatApiBase = (s.chat_api_url || '').trim().replace(/\/$/, '') || undefined
         this.showTestChat = true
       } catch (e) {
         this.$toast.error(e.message)
@@ -343,6 +356,7 @@ export default {
       this.testChatToken = ''
       this.testChatSystemId = ''
       this.testChatUserId = ''
+      this.testChatApiBase = ''
     },
     async openForm(s) {
       this.editing = s || null
@@ -353,6 +367,7 @@ export default {
           dify_base_url: s.dify_base_url || '',
           dify_api_key: s.dify_api_key || '',
           dify_chatbot_token: s.dify_chatbot_token || '',
+          chat_api_url: s.chat_api_url || '',
           allowed_origins: s.allowed_origins || '',
           enabled: s.enabled
         }
@@ -365,6 +380,7 @@ export default {
           dify_base_url: 'https://dify.drillquiz.com',
           dify_api_key: '',
           dify_chatbot_token: '',
+          chat_api_url: '',
           allowed_origins: '',
           enabled: true
         }
@@ -555,6 +571,7 @@ export default {
               dify_base_url: this.form.dify_base_url,
               dify_api_key: this.form.dify_api_key,
               dify_chatbot_token: this.form.dify_chatbot_token,
+              chat_api_url: this.form.chat_api_url,
               allowed_origins: this.form.allowed_origins,
               enabled: this.form.enabled
             })
@@ -676,6 +693,7 @@ export default {
 .form-row textarea::placeholder { color: rgba(255, 255, 255, 0.5); }
 .form-row textarea { min-height: 4rem; resize: vertical; }
 .form-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.form-field > input { flex: none; width: 100%; box-sizing: border-box; }
 .form-row input:focus { outline: none; border-color: var(--primary); }
 .form-row input:disabled { opacity: 0.6; }
 .form-row input[type="checkbox"] { margin-right: 0.5rem; }

@@ -58,7 +58,6 @@
     .msg { max-width: 85%; padding: 0.6rem 0.9rem; border-radius: 12px; white-space: pre-wrap; word-break: break-word; }
     .msg-user { align-self: flex-end; background: #2563eb; color: #fff; }
     .msg-assistant { align-self: flex-start; background: #f3f4f6; color: #111; }
-    .msg-role { font-size: 0.75rem; opacity: 0.8; margin-bottom: 0.2rem; }
     .input-row {
       padding: 0.75rem 1rem;
       border-top: 1px solid #e5e7eb;
@@ -161,7 +160,7 @@
         emptyState.style.display = 'none';
         const div = document.createElement('div');
         div.className = 'msg msg-' + role;
-        div.innerHTML = '<div class="msg-role">' + (role === 'user' ? t.me : t.bot) + '</div>' + escapeHtml(content || '');
+        div.innerHTML = escapeHtml(content || '');
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
       }

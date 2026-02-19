@@ -27,7 +27,6 @@
             :key="i"
             :class="['msg', 'msg-' + m.role]"
           >
-            <div class="msg-role">{{ m.role === 'user' ? $t('chat.me') : $t('chat.bot') }}</div>
             <div v-html="renderMarkdown(m.content)" class="msg-content"></div>
           </div>
         </div>
@@ -76,6 +75,7 @@ export default {
     chatSystemId: { type: String, default: '' },
     chatUserId: { type: String, default: '' },
     chatLang: { type: String, default: '' },
+    chatApiBase: { type: String, default: '' },  // Override API base for this chat (system-specific Chat API URL)
     inModal: { type: Boolean, default: false }
   },
   data() {
@@ -87,6 +87,11 @@ export default {
     }
   },
   computed: {
+    /** Base URL for chat API. Prefer prop (system-specific) over global config. */
+    apiBase() {
+      const base = (this.chatApiBase || '').trim().replace(/\/$/, '')
+      return base || chatApiBase || ''
+    },
     lang() {
       // Prefer: URL param (init.lang) > prop (chatLang) > i18n locale > browser
       const fromUrl = this.init?.lang
@@ -156,7 +161,7 @@ export default {
       if (!this.init || this.init.embed) return
       try {
         const r = await fetch(
-          (chatApiBase || '') + '/v1/conversations?system_id=' + encodeURIComponent(this.init.systemId) + '&user_id=' + encodeURIComponent(this.init.userId),
+          (this.apiBase || '') + '/v1/conversations?system_id=' + encodeURIComponent(this.init.systemId) + '&user_id=' + encodeURIComponent(this.init.userId),
           { headers: this.authHeader() }
         )
         if (!r.ok) throw new Error(this.$t('chat.errorList'))
@@ -170,7 +175,7 @@ export default {
       if (!this.init || this.init.embed) return
       try {
         const r = await fetch(
-          (chatApiBase || '') + '/v1/conversations/' + encodeURIComponent(id) + '?system_id=' + encodeURIComponent(this.init.systemId) + '&user_id=' + encodeURIComponent(this.init.userId),
+          (this.apiBase || '') + '/v1/conversations/' + encodeURIComponent(id) + '?system_id=' + encodeURIComponent(this.init.systemId) + '&user_id=' + encodeURIComponent(this.init.userId),
           { method: 'DELETE', headers: this.authHeader() }
         )
         if (!r.ok) {
@@ -196,7 +201,7 @@ export default {
       if (!id) return
       try {
         const r = await fetch(
-          (chatApiBase || '') + '/v1/conversations/' + encodeURIComponent(id) + '/messages?system_id=' + encodeURIComponent(this.init.systemId) + '&user_id=' + encodeURIComponent(this.init.userId),
+          (this.apiBase || '') + '/v1/conversations/' + encodeURIComponent(id) + '/messages?system_id=' + encodeURIComponent(this.init.systemId) + '&user_id=' + encodeURIComponent(this.init.userId),
           { headers: this.authHeader() }
         )
         if (!r.ok) throw new Error(this.$t('chat.errorMessages'))
@@ -215,7 +220,7 @@ export default {
       try {
         const body = { message: text, inputs: { language: this.lang } }
         if (this.currentConversationId) body.conversation_id = this.currentConversationId
-        const r = await fetch((chatApiBase || '') + '/v1/chat', {
+        const r = await fetch((this.apiBase || '') + '/v1/chat', {
           method: 'POST',
           headers: this.authHeader(),
           body: JSON.stringify(body)
@@ -376,7 +381,6 @@ export default {
 }
 .msg-user { align-self: flex-end; background: #2563eb; color: #fff; }
 .msg-assistant { align-self: flex-start; background: #f3f4f6; color: #111; }
-.msg-role { font-size: 0.75rem; opacity: 0.8; margin-bottom: 0.2rem; }
 .msg-content { white-space: normal; }
 .msg-content ul, .msg-content ol { margin: 0.4rem 0; padding-left: 1.25rem; }
 .msg-content li { margin: 0.2rem 0; }

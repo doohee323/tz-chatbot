@@ -38,6 +38,10 @@ def _migrate_chat_systems(sync_conn):
         sync_conn.execute(text("ALTER TABLE chat_systems ADD COLUMN created_by VARCHAR(64)"))
     except Exception:
         pass
+    try:
+        sync_conn.execute(text("ALTER TABLE chat_systems ADD COLUMN chat_api_url VARCHAR(512) DEFAULT ''"))
+    except Exception:
+        pass
 
 
 async def init_db():

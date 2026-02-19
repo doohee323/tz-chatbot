@@ -42,6 +42,7 @@ class SystemCreate(BaseModel):
     dify_base_url: str = Field(..., min_length=1, max_length=512)
     dify_api_key: str = Field("", max_length=256)  # Optional on create; add via edit after creating app in Dify
     dify_chatbot_token: str = Field("", max_length=128)
+    chat_api_url: str = Field("", max_length=512)  # Backend API for chat (gateway/inference). Empty = fallback to global.
     allowed_origins: str = Field("", max_length=1024)
     enabled: bool = True
 
@@ -51,6 +52,7 @@ class SystemUpdate(BaseModel):
     dify_base_url: str | None = Field(None, max_length=512)
     dify_api_key: str | None = Field(None, max_length=256)
     dify_chatbot_token: str | None = Field(None, max_length=128)
+    chat_api_url: str | None = Field(None, max_length=512)
     allowed_origins: str | None = Field(None, max_length=1024)
     enabled: bool | None = None
 
@@ -62,6 +64,7 @@ class SystemOut(BaseModel):
     dify_base_url: str
     dify_api_key: str
     dify_chatbot_token: str
+    chat_api_url: str
     allowed_origins: str
     enabled: bool
 
@@ -91,6 +94,7 @@ async def list_systems(
             dify_base_url=r.dify_base_url or "",
             dify_api_key=r.dify_api_key or "",
             dify_chatbot_token=r.dify_chatbot_token or "",
+            chat_api_url=getattr(r, "chat_api_url", "") or "",
             allowed_origins=r.allowed_origins or "",
             enabled=r.enabled,
         )
@@ -115,6 +119,7 @@ async def create_system(
         dify_base_url=body.dify_base_url.strip().rstrip("/"),
         dify_api_key=body.dify_api_key.strip(),
         dify_chatbot_token=body.dify_chatbot_token.strip(),
+        chat_api_url=(body.chat_api_url or "").strip().rstrip("/"),
         allowed_origins=body.allowed_origins.strip(),
         enabled=body.enabled,
         created_by=_admin,
@@ -129,6 +134,7 @@ async def create_system(
         dify_base_url=row.dify_base_url or "",
         dify_api_key=row.dify_api_key or "",
         dify_chatbot_token=row.dify_chatbot_token or "",
+        chat_api_url=row.chat_api_url or "",
         allowed_origins=row.allowed_origins or "",
         enabled=row.enabled,
     )
@@ -201,15 +207,18 @@ async def get_test_chat_token(
     result = await db.execute(select(ChatSystem).where(ChatSystem.system_id == sid))
     row = result.scalar_one_or_none()
     _require_system_owner(row, admin_username)
+    # Allow test token if either: Dify (dify_base_url + dify_api_key) or chat_api_url is configured
     dify_base = get_dify_base_url(sid)
     dify_key = get_dify_api_key(sid)
     if not dify_base or not dify_key:
         dify_base = (row.dify_base_url or "").strip().rstrip("/")
         dify_key = (row.dify_api_key or "").strip()
-    if not dify_base or not dify_key:
+    chat_api_url = (row.chat_api_url or "").strip().rstrip("/")
+    has_dify = bool(dify_base and dify_key)
+    if not has_dify and not chat_api_url:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Dify not configured for this system. Set dify_base_url and dify_api_key.",
+            detail="Configure Dify (dify_base_url and dify_api_key) or Chat API URL for this system.",
         )
     settings = get_settings()
     user_id = "admin_test"
@@ -238,6 +247,7 @@ async def get_system(
         dify_base_url=row.dify_base_url or "",
         dify_api_key=row.dify_api_key or "",
         dify_chatbot_token=row.dify_chatbot_token or "",
+        chat_api_url=row.chat_api_url or "",
         allowed_origins=row.allowed_origins or "",
         enabled=row.enabled,
     )
@@ -263,6 +273,8 @@ async def update_system(
         row.dify_api_key = body.dify_api_key.strip()
     if body.dify_chatbot_token is not None:
         row.dify_chatbot_token = body.dify_chatbot_token.strip()
+    if body.chat_api_url is not None:
+        row.chat_api_url = (body.chat_api_url or "").strip().rstrip("/")
     if body.allowed_origins is not None:
         row.allowed_origins = body.allowed_origins.strip()
     if body.enabled is not None:
@@ -276,6 +288,7 @@ async def update_system(
         dify_base_url=row.dify_base_url or "",
         dify_api_key=row.dify_api_key or "",
         dify_chatbot_token=row.dify_chatbot_token or "",
+        chat_api_url=row.chat_api_url or "",
         allowed_origins=row.allowed_origins or "",
         enabled=row.enabled,
     )
