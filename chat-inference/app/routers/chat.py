@@ -1,4 +1,8 @@
-"""Chat API: /v1/chat, /v1/chat-token, /v1/conversations. Same schema as chat-gateway."""
+"""Chat API: /v1/chat, /v1/chat-token, /v1/conversations. Same schema as chat-gateway.
+
+When chat-gateway uses chat-inference (CHAT_INFERENCE_URL), it sends the same shape as Dify:
+query (user message), user, conversation_id, inputs. We accept query or message so gateway needs no change.
+"""
 import asyncio
 import logging
 import time
@@ -7,7 +11,7 @@ import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Security, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AliasChoices
 
 from app.auth import API_KEY_HEADER, get_identity_from_body, get_identity_optional, ChatIdentity
 from app.config import CHAT_TOKEN_ORIGINS_DEFAULT, get_settings
@@ -27,7 +31,8 @@ logger = logging.getLogger("chat_inference")
 class ChatRequest(BaseModel):
     system_id: str | None = Field(None, min_length=1, max_length=64)
     user_id: str | None = Field(None, min_length=1, max_length=256)
-    message: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1, validation_alias=AliasChoices("message", "query"))
+    user: str | None = Field(None, description="Dify-style user id (system_id_user_id). Used when gateway sends no system_id/user_id.")
     conversation_id: str | None = None
     inputs: dict | None = None
 
@@ -70,7 +75,12 @@ def _resolve_identity(
         return get_identity_from_body(body.system_id, body.user_id)
     if system_id and user_id:
         return get_identity_from_body(system_id, user_id)
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="system_id and user_id required in body or query when using API key")
+    # Gateway (Dify-free) sends only "user" (dify_user = system_id_user_id); parse so gateway code stays unchanged
+    if body and getattr(body, "user", None) and (body.user or "").strip():
+        parts = (body.user or "").strip().split("_", 1)
+        if len(parts) == 2 and parts[0].strip() and parts[1].strip():
+            return get_identity_from_body(parts[0].strip(), parts[1].strip())
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="system_id and user_id required in body or query when using API key (or send user as system_id_user_id)")
 
 
 settings = get_settings()
@@ -82,8 +92,8 @@ _chain_products = None
 def _get_classifier():
     global _classifier
     if _classifier is None:
-        if not settings.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY required")
+        if not (settings.openai_api_key or settings.gemini_api_key):
+            raise ValueError("At least one of GEMINI_API_KEY (or GOOGLE_API_KEY) or OPENAI_API_KEY is required")
         _classifier = build_classifier(settings)
     return _classifier
 
@@ -91,8 +101,8 @@ def _get_classifier():
 def _get_chains():
     global _chain_after_sales, _chain_products
     if _chain_after_sales is None:
-        if not settings.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY required")
+        if not (settings.openai_api_key or settings.gemini_api_key):
+            raise ValueError("At least one of GEMINI_API_KEY (or GOOGLE_API_KEY) or OPENAI_API_KEY is required")
         _chain_after_sales = build_rag_chain(settings, settings.rag_collection_after_sales)
         _chain_products = build_rag_chain(settings, settings.rag_collection_products)
     return _chain_after_sales, _chain_products
@@ -100,16 +110,21 @@ def _get_chains():
 
 def _run_pipeline(query: str) -> tuple[str, str | None]:
     """Returns (answer, collection_or_none). collection is RAG collection name when RAG used, else None."""
+    logger.info("Pipeline query: %s", query[:200] + ("..." if len(query) > 200 else ""))
     classify = _get_classifier()
     label = classify(query)
-    logger.info("Classifier result: %s", label)
+    logger.info("Classifier result: %s (branch: %s)", label, "other" if label == settings.class_other else "rag")
     if label == settings.class_other:
+        logger.info("Returning fixed other_answer (no RAG)")
         return settings.other_answer, None
     chain_a, chain_p = _get_chains()
     if label == settings.class_after_sales:
+        logger.info("RAG branch: after_sales, collection=%s", settings.rag_collection_after_sales)
         return chain_a.invoke(query), settings.rag_collection_after_sales
     if label == settings.class_products:
+        logger.info("RAG branch: products, collection=%s", settings.rag_collection_products)
         return chain_p.invoke(query), settings.rag_collection_products
+    logger.warning("Classifier label %r not matched, returning other_answer", label)
     return settings.other_answer, None
 
 
@@ -135,6 +150,7 @@ async def post_chat(
     t0 = time.perf_counter()
     try:
         answer, collection = _run_pipeline(body.message.strip())
+        logger.info("Pipeline done: collection=%s, answer_len=%d", collection, len(answer or ""))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
     except Exception as e:

@@ -12,7 +12,8 @@ asyncpg>=0.29.0
 jinja2>=3.0.0
 minio>=7.2.0
 
-# LangChain + Gemini (same as RAG Backend / Dify)
+# LangChain: Gemini primary (Dify parity), OpenAI fallback
 langchain>=0.3.0
 langchain-core>=0.3.0
+langchain-openai>=0.2.0
 langchain-google-genai>=2.0.0

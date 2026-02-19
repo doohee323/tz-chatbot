@@ -896,7 +896,7 @@ deploy_to_kubernetes() {
     MINIO_ACCESS_KEY_B64=$(echo -n "${MINIO_ACCESS_KEY:-}" | base64 -w 0 2>/dev/null || echo -n "${MINIO_ACCESS_KEY:-}" | base64)
     MINIO_SECRET_KEY=$(echo -n "${MINIO_SECRET_KEY:-}" | base64 -w 0 2>/dev/null || echo -n "${MINIO_SECRET_KEY:-}" | base64)
     POSTGRES_PASSWORD=$(echo -n ${POSTGRES_PASSWORD} | base64)
-    OPENAI_API_KEY=$(echo -n ${OPENAI_API_KEY} | base64 -w 0)
+    OPENAI_API_KEY=$(echo -n "${OPENAI_API_KEY:-}" | base64 -w 0 2>/dev/null || echo -n "${OPENAI_API_KEY:-}" | base64)
     GEMINI_API_KEY=$(echo -n ${GEMINI_API_KEY:-} | base64 -w 0 || echo "")
 
     # Substitute secrets (macOS compatible)
@@ -968,7 +968,7 @@ deploy_to_kubernetes() {
         MINIO_ACCESS_KEY_B64=$(echo -n "${MINIO_ACCESS_KEY:-}" | base64 -w 0 2>/dev/null || echo -n "${MINIO_ACCESS_KEY:-}" | base64)
         MINIO_SECRET_KEY_B64=$(echo -n "${MINIO_SECRET_KEY:-}" | base64 -w 0 2>/dev/null || echo -n "${MINIO_SECRET_KEY:-}" | base64)
         POSTGRES_PASSWORD_B64=$(echo -n ${POSTGRES_PASSWORD} | base64)
-        OPENAI_API_KEY_B64=$(echo -n ${OPENAI_API_KEY} | base64 -w 0)
+        OPENAI_API_KEY_B64=$(echo -n "${OPENAI_API_KEY:-}" | base64 -w 0 2>/dev/null || echo -n "${OPENAI_API_KEY:-}" | base64)
         GEMINI_API_KEY_B64=$(echo -n ${GEMINI_API_KEY:-} | base64 -w 0 || echo "")
         
         sed -i.bak "s|#GOOGLE_OAUTH_CLIENT_SECRET|${GOOGLE_OAUTH_CLIENT_SECRET_B64}|g" ${TARGET_K8S_FILE} && rm -f ${TARGET_K8S_FILE}.bak

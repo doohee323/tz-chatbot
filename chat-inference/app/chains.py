@@ -1,12 +1,16 @@
-"""RAG chains: retriever + prompt + LLM. Same system prompt as Dify workflow."""
-from langchain_google_genai import ChatGoogleGenerativeAI
+"""RAG chains: retriever + prompt + LLM.
+
+Same system prompt as Dify workflow (dify/cointutor/Question Classifier + Knowledge + Chatbot .yml).
+Uses same RAG DB/index via RAG Backend -> Qdrant so results are comparable to Dify.
+"""
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from app.config import Settings
+from app.llm_helper import get_llm
 from app.retrievers import RagApiRetriever
 
-
+# Exact text from Dify LLM node prompt_template (both after_sales and products branches)
 SYSTEM_PROMPT = """Use the following context as your learned knowledge, inside <context></context> XML tags.
 
 <context>
@@ -34,12 +38,7 @@ def build_rag_chain(settings: Settings, collection: str):
         collection=collection,
         top_k=settings.rag_top_k,
     )
-    llm = ChatGoogleGenerativeAI(
-        model=settings.llm_model,
-        google_api_key=settings.gemini_api_key,
-        temperature=settings.temperature,
-        max_output_tokens=settings.max_tokens,
-    )
+    llm = get_llm(settings)
     prompt = ChatPromptTemplate.from_messages([
         ("system", SYSTEM_PROMPT),
         ("human", "{query}"),

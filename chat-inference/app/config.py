@@ -80,9 +80,11 @@ class Settings(BaseSettings):
             return []
         return [o.strip() for o in self.allowed_chat_token_origins.split(",") if o.strip()]
 
-    # LLM (Gemini, same as Dify)
+    # LLM: Gemini primary (Dify parity), OpenAI fallback
     gemini_api_key: str = Field("", validation_alias=AliasChoices("GEMINI_API_KEY", "GOOGLE_API_KEY"))
-    llm_model: str = "gemini-2.5-flash"
+    llm_model: str = "gemini-2.5-flash"  # used when Gemini is selected (primary)
+    openai_api_key: str = Field("", validation_alias="OPENAI_API_KEY")
+    openai_llm_model: str = Field("gpt-4o-mini", validation_alias="OPENAI_LLM_MODEL")
     temperature: float = 0.7
     max_tokens: int = 512
 
@@ -92,13 +94,13 @@ class Settings(BaseSettings):
     rag_collection_products: str = Field("rag_docs_cointutor", validation_alias="RAG_COLLECTION_PRODUCTS")
     rag_top_k: int = Field(5, validation_alias="RAG_TOP_K")
 
-    # Classifier labels (must match Dify workflow)
+    # Classifier labels (must match Dify workflow Question Classifier node)
     class_after_sales: str = "after_sales"
     class_products: str = "products"
     class_other: str = "other"
 
-    # Fixed answer for "other" branch
-    other_answer: str = "Sorry, I can't help you with these questions."
+    # Fixed answer for "other" branch (exact string from Dify Answer node)
+    other_answer: str = "Sorry, I can't help you with these questions. "
 
 
 @lru_cache

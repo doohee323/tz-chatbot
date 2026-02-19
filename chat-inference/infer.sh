@@ -9,7 +9,7 @@ if [[ -d .venv ]]; then
 fi
 
 if [[ ! -f .env ]]; then
-  echo "Warning: .env not found. Copy .env.example to .env and set GEMINI_API_KEY, RAG_BACKEND_URL."
+  echo "Warning: .env not found. Copy .env.example to .env and set OPENAI_API_KEY and/or GEMINI_API_KEY, RAG_BACKEND_URL."
 fi
 
 export PYTHONPATH="$DIR"

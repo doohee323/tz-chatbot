@@ -6,14 +6,14 @@ Classifier + RAG + LLM pipeline. **Uses same Qdrant (Dify's DB)** via RAG Backen
 
 1. **Question Classifier** (LLM): 3-way → `after_sales`, `products`, `other`
 2. **Knowledge Retrieval**: RAG Backend POST /query → Qdrant (same DB Dify uses)
-3. **LLM** (Gemini): context + prompt → answer
+3. **LLM** (Gemini primary for Dify parity, OpenAI fallback): context + prompt → answer
 4. **Other branch**: fixed "Sorry, I can't help with these questions."
 
 ## Config
 
 Copy `.env.example` → `.env` and set:
 
-- `GEMINI_API_KEY`: Gemini API key (same as Dify)
+- **LLM**: at least one required. **Gemini** (primary, Dify parity): `GEMINI_API_KEY`, optional `LLM_MODEL` (default `gemini-2.5-flash`). **OpenAI** (fallback): `OPENAI_API_KEY`, optional `OPENAI_LLM_MODEL` (default `gpt-4o-mini`).
 - `RAG_BACKEND_URL`: RAG Backend URL (queries Qdrant)
   - K8s: `http://rag-backend.rag.svc.cluster.local:8000`
   - Local: `http://localhost:8000` (port-forward rag-backend)
