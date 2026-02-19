@@ -101,8 +101,14 @@ data:
   MINIO_ENDPOINT: "minio.devops.svc.cluster.local"
   MINIO_PORT: "9000"
   MINIO_BUCKET: "rag-docs"
+
+  # OpenTelemetry (앱에서 OTLP 전송 → Collector/Tempo → Grafana Explore)
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-collector.opentelemetry-operator.svc.cluster.local:4318"
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://opentelemetry-collector.opentelemetry-operator.svc.cluster.local:4318/v1/traces"
   OTEL_SERVICE_NAME: "chat-admin"
-  OTEL_EXPORTER_OTLP_ENDPOINT: ""
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_CONSOLE_EXPORT: "true"
+  OTEL_PYTHON_FASTAPI_EXCLUDED_URLS: "/health,static/.*,favicon.ico"
 
 ---
 apiVersion: networking.k8s.io/v1

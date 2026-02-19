@@ -74,8 +74,12 @@ data:
   POSTGRES_USER: "postgres"
   CHAT_ADMIN_URL: "http://chat-admin-GIT_BRANCH.devops-dev.svc.cluster.local"
   RAG_BACKEND_URL: "http://rag-backend.rag.svc.cluster.local:8000"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-collector.opentelemetry-operator.svc.cluster.local:4318"
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://opentelemetry-collector.opentelemetry-operator.svc.cluster.local:4318/v1/traces"
   OTEL_SERVICE_NAME: "chat-inference"
-  OTEL_EXPORTER_OTLP_ENDPOINT: ""
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_CONSOLE_EXPORT: "true"
+  OTEL_PYTHON_FASTAPI_EXCLUDED_URLS: "/health,static/.*,favicon.ico"
 
 ---
 apiVersion: networking.k8s.io/v1
