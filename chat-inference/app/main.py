@@ -40,6 +40,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Chat Inference", description="Dify-free chat pipeline", lifespan=lifespan)
 
+# OpenTelemetry: instrument when OTEL_EXPORTER_OTLP_ENDPOINT is set
+from app.otel import setup_otel
+setup_otel(app, service_name="chat-inference")
+
 # CORS: required for frontends (e.g. DrillQuiz) calling /v1/chat-token. OPTIONS preflight + X-API-Key allowed.
 CORS_ALLOW_METHODS = ["GET", "POST", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = ["X-API-Key", "Content-Type", "Authorization", "Accept"]

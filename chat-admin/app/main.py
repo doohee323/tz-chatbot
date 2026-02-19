@@ -44,6 +44,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="TZ-Chat", description="TZ-Chat in front of Dify", lifespan=lifespan)
 
+# OpenTelemetry: instrument when OTEL_EXPORTER_OTLP_ENDPOINT is set
+from app.otel import setup_otel
+setup_otel(app, service_name="chat-admin")
+
 # CORS: required for frontends (e.g. DrillQuiz) calling /v1/chat-token. OPTIONS preflight + X-API-Key allowed.
 CORS_ORIGINS_DEFAULT = [
     "https://us-dev.drillquiz.com",

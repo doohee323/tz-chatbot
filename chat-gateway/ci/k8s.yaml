@@ -92,6 +92,8 @@ data:
   # MinIO for chat quality data (rag-quality-data). Empty = skip.
   MINIO_ENDPOINT: "http://minio.devops.svc.cluster.local:9000"
   MINIO_RAG_QUALITY_BUCKET: "rag-quality-data"
+  OTEL_SERVICE_NAME: "chat-gateway"
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
 
 ---
 apiVersion: networking.k8s.io/v1

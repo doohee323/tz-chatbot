@@ -88,6 +88,9 @@ data:
   POSTGRES_USER: "postgres"
   CHAT_ADMIN_URL: "https://chat-admin.DOMAIN_PLACEHOLDER"
   RAG_BACKEND_URL: "http://rag-backend.rag.svc.cluster.local:8000"
+  # OpenTelemetry (optional: set OTEL_EXPORTER_OTLP_ENDPOINT to enable tracing)
+  OTEL_SERVICE_NAME: "chat-inference"
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
 
 ---
 apiVersion: networking.k8s.io/v1

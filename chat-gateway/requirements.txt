@@ -11,3 +11,9 @@ jinja2>=3.1.0
 pydantic-settings>=2.1.0
 minio>=7.2.0
 pyyaml>=6.0
+
+# OpenTelemetry (optional: set OTEL_EXPORTER_OTLP_ENDPOINT to enable)
+opentelemetry-api>=1.28.0
+opentelemetry-sdk>=1.28.0
+opentelemetry-exporter-otlp-proto-http>=1.28.0
+opentelemetry-instrumentation-fastapi>=0.49b0
