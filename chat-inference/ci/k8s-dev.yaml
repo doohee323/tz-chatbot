@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-gateway-GIT_BRANCH
+  name: chat-inference-GIT_BRANCH
 spec:
   selector:
     matchLabels:
-      app: chat-gateway-GIT_BRANCH
+      app: chat-inference-GIT_BRANCH
   replicas: 1
   template:
     metadata:
@@ -13,23 +13,23 @@ spec:
         org: tz
         team: devops
         environment: STAGING
-        app: chat-gateway-GIT_BRANCH
+        app: chat-inference-GIT_BRANCH
     spec:
       imagePullSecrets:
         - name: tz-registrykey
       containers:
-      - name: chat-gateway-GIT_BRANCH
-        image: doohee323/chat-gateway:BUILD_NUMBER_PLACEHOLDER
+      - name: chat-inference-GIT_BRANCH
+        image: doohee323/chat-inference:BUILD_NUMBER_PLACEHOLDER
         imagePullPolicy: Always
         ports:
         - containerPort: 8088
         readinessProbe:
           httpGet:
-            path: /docs
+            path: /health
             port: 8088
         livenessProbe:
           httpGet:
-            path: /docs
+            path: /health
             port: 8088
           initialDelaySeconds: 10
           periodSeconds: 30
@@ -42,19 +42,19 @@ spec:
             memory: 512Mi
         envFrom:
         - configMapRef:
-            name: chat-gateway-configmap-GIT_BRANCH
+            name: chat-inference-configmap-GIT_BRANCH
         - secretRef:
-            name: chat-gateway-secret-GIT_BRANCH
+            name: chat-inference-secret-GIT_BRANCH
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-gateway-GIT_BRANCH
+  name: chat-inference-GIT_BRANCH
 spec:
   type: NodePort
   selector:
-    app: chat-gateway-GIT_BRANCH
+    app: chat-inference-GIT_BRANCH
   ports:
   - port: 80
     name: http
@@ -64,23 +64,22 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: chat-gateway-configmap-GIT_BRANCH
+  name: chat-inference-configmap-GIT_BRANCH
 data:
-  DIFY_BASE_URL: ""
-  DIFY_DRILLQUIZ_BASE_URL: "https://dify.DOMAIN_PLACEHOLDER"
-  DIFY_COINTUTOR_BASE_URL: ""
-  ALLOWED_CHAT_TOKEN_ORIGINS: ""
   ALLOWED_SYSTEM_IDS: "drillquiz,cointutor"
+  ALLOWED_CHAT_TOKEN_ORIGINS: ""
   POSTGRES_HOST: "devops-postgres-postgresql.devops-dev.svc.cluster.local"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "chat_admin"
   POSTGRES_USER: "postgres"
+  CHAT_ADMIN_URL: "http://chat-admin-GIT_BRANCH.devops-dev.svc.cluster.local"
+  RAG_BACKEND_URL: "http://rag-backend.rag.svc.cluster.local:8000"
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: chat-gateway-GIT_BRANCH
+  name: chat-inference-GIT_BRANCH
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -90,45 +89,43 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: chat-dev.DOMAIN_PLACEHOLDER
+  - host: chat-inference-dev.DOMAIN_PLACEHOLDER
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: chat-gateway-GIT_BRANCH
+            name: chat-inference-GIT_BRANCH
             port:
               number: 80
   tls:
     - hosts:
-        - chat-dev.DOMAIN_PLACEHOLDER
-      secretName: chat-gateway-GIT_BRANCH
+        - chat-inference-dev.DOMAIN_PLACEHOLDER
+      secretName: chat-inference-GIT_BRANCH
 
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: chat-gateway-secret-GIT_BRANCH
+  name: chat-inference-secret-GIT_BRANCH
 type: Opaque
 data:
   CHAT_GATEWAY_JWT_SECRET: #CHAT_GATEWAY_JWT_SECRET
   CHAT_GATEWAY_API_KEY: #CHAT_GATEWAY_API_KEY
   POSTGRES_PASSWORD: #POSTGRES_PASSWORD
-  DIFY_API_KEY: #DIFY_API_KEY
-  DIFY_DRILLQUIZ_API_KEY: #DIFY_DRILLQUIZ_API_KEY
-  DIFY_COINTUTOR_API_KEY: #DIFY_COINTUTOR_API_KEY
+  GEMINI_API_KEY: #GEMINI_API_KEY
 
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: chat-gateway-hpa-GIT_BRANCH
+  name: chat-inference-hpa-GIT_BRANCH
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: chat-gateway-GIT_BRANCH
+    name: chat-inference-GIT_BRANCH
   minReplicas: 1
   maxReplicas: 2
   targetCPUUtilizationPercentage: 70
