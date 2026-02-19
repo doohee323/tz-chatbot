@@ -1014,15 +1014,8 @@ deploy_to_kubernetes() {
         # Wait for deployment to be ready
         kubectl -n ${NAMESPACE} rollout status deployment/${DEPLOYMENT_NAME} --timeout=300s
 
-        # Get database password from Secret
-        DB_PASSWORD=$(kubectl -n ${NAMESPACE} get secret drillquiz-secret-${SECRET_SUFFIX} -o jsonpath='{.data.POSTGRES_PASSWORD}' | base64 -d)
-        if [ -z "${DB_PASSWORD}" ]; then
-            log_error "❌ Cannot get database password."
-            exit 1
-        fi
-
-        # Execute migration with environment variables
-        kubectl -n ${NAMESPACE} exec deployment/${DEPLOYMENT_NAME} -- env POSTGRES_PASSWORD="${DB_PASSWORD}" POSTGRES_HOST="${DB_HOST}" python manage.py migrate --fake-initial
+        # chat-gateway is FastAPI + SQLAlchemy; DB init/migration runs at app startup (init_db), no Django manage.py
+        # (No post-deploy migration step for this app.)
 
         # DEBUG: Sleep for 1000 seconds to allow pod inspection during build
         # Uncomment below when you need to exec into the pod for debugging
