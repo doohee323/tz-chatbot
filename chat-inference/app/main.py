@@ -1,4 +1,3 @@
-"""Chat Inference: Dify-free classifier + RAG + LLM. Same Qdrant via RAG Backend."""
 import logging
 import sys
 from contextlib import asynccontextmanager
@@ -11,7 +10,7 @@ from app.config import CHAT_TOKEN_ORIGINS_DEFAULT, get_settings
 from app.database import init_db
 from app.routers import cache_view, chat, chat_page, index
 
-logger = logging.getLogger("chat_inference")
+# Ensure app logs appear in terminal even with uvicorn --reload (force=True overrides existing config)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -19,6 +18,7 @@ logging.basicConfig(
     stream=sys.stderr,
     force=True,
 )
+logger = logging.getLogger("chat_inference")
 
 
 class RequestLogMiddleware(BaseHTTPMiddleware):
@@ -40,8 +40,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Chat Inference", description="Dify-free chat pipeline", lifespan=lifespan)
 
+# CORS: required for frontends (e.g. DrillQuiz) calling /v1/chat-token. OPTIONS preflight + X-API-Key allowed.
 CORS_ALLOW_METHODS = ["GET", "POST", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = ["X-API-Key", "Content-Type", "Authorization", "Accept"]
+
+# Merge default domains with env extra list (same default as /v1/chat-token origin check).
 _origins_extra = get_settings().allowed_chat_token_origins_list
 cors_origins = list(CHAT_TOKEN_ORIGINS_DEFAULT)
 for o in _origins_extra:
@@ -57,7 +60,6 @@ app.add_middleware(
     expose_headers=[],
 )
 app.add_middleware(RequestLogMiddleware)
-
 app.include_router(index.router)
 app.include_router(chat.router)
 app.include_router(chat_page.router)

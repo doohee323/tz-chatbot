@@ -1,3 +1,4 @@
+"""Chat API: /v1/chat, /v1/chat-token, /v1/conversations. Same schema as chat-gateway."""
 import asyncio
 import logging
 import time
@@ -24,7 +25,7 @@ from app.services.chat_quality_minio import record_chat_to_minio
 from app.services.rag_quality import get_expected_for_question
 
 router = APIRouter(prefix="/v1", tags=["chat"])
-
+logger = logging.getLogger("chat_gateway")
 
 def _dify_metadata_for_minio(result_metadata: dict | None) -> dict:
     """Map Dify API metadata to MinIO schema. 지식 검색/위키피디아 경로 시 retriever_resources가 채워질 수 있음."""
@@ -88,9 +89,6 @@ async def _record_chat_to_minio_task(
         keywords=expected.get("keywords") if expected else None,
         question_id=expected.get("question_id") if expected else None,
     )
-
-
-logger = logging.getLogger("chat_gateway")
 
 
 @router.get("/status")

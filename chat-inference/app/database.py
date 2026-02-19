@@ -1,11 +1,12 @@
-"""Database. Same schema as chat-gateway (sync_users, conversation_cache, message_cache, conversation_mappings)."""
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-
 from app.config import get_settings
 
 settings = get_settings()
-engine = create_async_engine(settings.effective_database_url, echo=False)
+engine = create_async_engine(
+    settings.effective_database_url,
+    echo=False,
+)
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
 
 

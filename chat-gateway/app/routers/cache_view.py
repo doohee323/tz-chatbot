@@ -36,7 +36,6 @@ async def list_cached_conversations(
     """List conversations by system, user, and date range. API Key required."""
     settings = get_settings()
     if not api_key or (settings.api_keys_list and api_key not in settings.api_keys_list):
-        from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required")
     q = select(ConversationCache).order_by(ConversationCache.created_at.desc().nullslast())
     if system_id:

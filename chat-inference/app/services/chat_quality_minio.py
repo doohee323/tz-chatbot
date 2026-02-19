@@ -1,4 +1,4 @@
-"""Store chat quality data to MinIO for MLflow RAG quality. Same schema as chat-gateway."""
+"""Store chat quality data to MinIO for MLflow RAG quality pipelines."""
 import asyncio
 import json
 import logging
@@ -117,7 +117,7 @@ async def record_chat_to_minio(
         host, _, port_part = ep.partition(":")
         port = int(port_part) if port_part else (443 if secure else 9000)
         if not host:
-            raise ValueError("Invalid MINIO_ENDPOINT")
+            raise ValueError("Invalid MINIO_ENDPOINT for chat quality")
 
         client = MinioCls(
             f"{host}:{port}",
@@ -128,6 +128,7 @@ async def record_chat_to_minio(
         if not client.bucket_exists(bucket):
             client.make_bucket(bucket)
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        logger.debug("Chat quality payload (MinIO %s/%s): %s", bucket, object_path, data.decode("utf-8"))
         from io import BytesIO
         client.put_object(
             bucket,

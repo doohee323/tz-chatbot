@@ -1,4 +1,5 @@
-"""Cache view: redirect /cache to chat-admin. v1/cache/* for API."""
+"""Cache (conversation_cache, message_cache) query API."""
+from datetime import datetime, time
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -13,7 +14,6 @@ router = APIRouter(tags=["cache"])
 
 
 def _parse_date(s: str | None):
-    from datetime import datetime
     if not s:
         return None
     try:
@@ -22,16 +22,18 @@ def _parse_date(s: str | None):
         return None
 
 
+# ---------- API ----------
+
 @router.get("/v1/cache/conversations")
 async def list_cached_conversations(
     db: AsyncSession = Depends(get_db),
     api_key: str = Security(API_KEY_HEADER),
-    system_id: str | None = Query(None),
-    user_id: str | None = Query(None),
-    from_date: str | None = Query(None),
-    to_date: str | None = Query(None),
+    system_id: str | None = Query(None, description="System ID (from chat_systems)"),
+    user_id: str | None = Query(None, description="User ID"),
+    from_date: str | None = Query(None, description="Start date YYYY-MM-DD"),
+    to_date: str | None = Query(None, description="End date YYYY-MM-DD"),
 ):
-    """List conversations. API Key required."""
+    """List conversations by system, user, and date range. API Key required."""
     settings = get_settings()
     if not api_key or (settings.api_keys_list and api_key not in settings.api_keys_list):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required")
@@ -45,7 +47,6 @@ async def list_cached_conversations(
         q = q.where(ConversationCache.created_at >= f)
     t = _parse_date(to_date)
     if t:
-        from datetime import datetime, time
         end = datetime.combine(t.date(), time(23, 59, 59, 999999))
         q = q.where(ConversationCache.created_at <= end)
     result = await db.execute(q)
@@ -69,13 +70,11 @@ async def list_cached_messages(
     db: AsyncSession = Depends(get_db),
     api_key: str = Security(API_KEY_HEADER),
 ):
-    """List messages. API Key required."""
+    """List messages for a conversation. API Key required."""
     settings = get_settings()
     if not api_key or (settings.api_keys_list and api_key not in settings.api_keys_list):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required")
-    q = select(MessageCache).where(MessageCache.conversation_id == conversation_id).order_by(
-        MessageCache.created_at.asc().nullslast(), MessageCache.id.asc()
-    )
+    q = select(MessageCache).where(MessageCache.conversation_id == conversation_id).order_by(MessageCache.created_at.asc().nullslast(), MessageCache.id.asc())
     result = await db.execute(q)
     rows = result.scalars().all()
     return [
@@ -89,8 +88,10 @@ async def list_cached_messages(
     ]
 
 
+# ---------- Web page (redirect to chat-admin) ----------
+
 @router.get("/cache")
 async def cache_view_page():
-    """Redirect /cache to chat-admin."""
+    """Redirect /cache to chat-admin (chat list)."""
     url = get_settings().chat_admin_url.rstrip("/")
     return RedirectResponse(url=url, status_code=302)

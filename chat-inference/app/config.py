@@ -1,11 +1,21 @@
-"""Config for chat-inference. Same Qdrant (Dify's DB) via RAG Backend API."""
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, computed_field, AliasChoices
 
-
-# Default origins for CORS and /v1/chat-token. Same as chat-gateway.
+# Default origins for CORS and /v1/chat-token (when ALLOWED_CHAT_TOKEN_ORIGINS is empty). Keep in sync with main.py CORS.
 CHAT_TOKEN_ORIGINS_DEFAULT = [
+    "https://chat-admin.drillquiz.com",
+    "https://chat-admin-qa.drillquiz.com",
+    "https://chat-admin-dev.drillquiz.com",
+    "https://us-dev.drillquiz.com",
+    "https://us.drillquiz.com",
+    "https://us-qa.drillquiz.com",
+    "https://devops.drillquiz.com",
+    "https://leetcode.drillquiz.com",
+    "https://cointutor.net",
+    "https://www.cointutor.net",
+    "https://dev.cointutor.net",
+    "https://qa.cointutor.net",
     "http://localhost:8080",
     "http://localhost:8000",
     "http://localhost:8088",
@@ -76,12 +86,11 @@ class Settings(BaseSettings):
     temperature: float = 0.7
     max_tokens: int = 512
 
-    # RAG Backend (Dify's DB via Qdrant; RAG Backend queries it)
-    # Default: same RAG Backend URL used by Dify as tool
-    rag_backend_url: str = "http://rag-backend.rag.svc.cluster.local:8000"
-    rag_collection_after_sales: str = "rag_docs_cointutor"
-    rag_collection_products: str = "rag_docs_cointutor"
-    rag_top_k: int = 5
+    # RAG Backend (Dify's DB via Qdrant; RAG Backend queries it). Set via RAG_BACKEND_URL (e.g. K8s: http://rag-backend.rag.svc.cluster.local:8000, local: http://localhost:8001).
+    rag_backend_url: str = Field("", validation_alias="RAG_BACKEND_URL")
+    rag_collection_after_sales: str = Field("rag_docs_cointutor", validation_alias="RAG_COLLECTION_AFTER_SALES")
+    rag_collection_products: str = Field("rag_docs_cointutor", validation_alias="RAG_COLLECTION_PRODUCTS")
+    rag_top_k: int = Field(5, validation_alias="RAG_TOP_K")
 
     # Classifier labels (must match Dify workflow)
     class_after_sales: str = "after_sales"

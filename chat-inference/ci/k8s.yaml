@@ -75,6 +75,21 @@ spec:
     targetPort: 8088
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chat-inference-configmap-GIT_BRANCH
+data:
+  ALLOWED_SYSTEM_IDS: "drillquiz,cointutor"
+  ALLOWED_CHAT_TOKEN_ORIGINS: ""
+  POSTGRES_HOST: "devops-postgres-postgresql.devops.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "chat_admin"
+  POSTGRES_USER: "postgres"
+  CHAT_ADMIN_URL: "http://localhost:8080"
+  RAG_BACKEND_URL: "http://rag-backend.rag.svc.cluster.local:8000"
+
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -105,18 +120,15 @@ spec:
 
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
-  name: chat-inference-configmap-GIT_BRANCH
+  name: chat-inference-secret-GIT_BRANCH
+type: Opaque
 data:
-  ALLOWED_SYSTEM_IDS: "drillquiz,cointutor"
-  ALLOWED_CHAT_TOKEN_ORIGINS: ""
-  POSTGRES_HOST: "devops-postgres-postgresql.devops.svc.cluster.local"
-  POSTGRES_PORT: "5432"
-  POSTGRES_DB: "chat_admin"
-  POSTGRES_USER: "postgres"
-  CHAT_ADMIN_URL: "http://localhost:8080"
-  RAG_BACKEND_URL: "http://rag-backend.rag.svc.cluster.local:8000"
+  CHAT_GATEWAY_JWT_SECRET: #CHAT_GATEWAY_JWT_SECRET
+  CHAT_GATEWAY_API_KEY: #CHAT_GATEWAY_API_KEY
+  POSTGRES_PASSWORD: #POSTGRES_PASSWORD
+  GEMINI_API_KEY: #GEMINI_API_KEY
 
 ---
 apiVersion: policy/v1
@@ -142,15 +154,3 @@ spec:
   minReplicas: 2
   maxReplicas: 8
   targetCPUUtilizationPercentage: 70
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: chat-inference-secret-GIT_BRANCH
-type: Opaque
-data:
-  CHAT_GATEWAY_JWT_SECRET: #CHAT_GATEWAY_JWT_SECRET
-  CHAT_GATEWAY_API_KEY: #CHAT_GATEWAY_API_KEY
-  POSTGRES_PASSWORD: #POSTGRES_PASSWORD
-  GEMINI_API_KEY: #GEMINI_API_KEY

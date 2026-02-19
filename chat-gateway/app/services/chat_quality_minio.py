@@ -1,7 +1,4 @@
-"""Store chat quality data to MinIO for MLflow RAG quality pipelines.
-
-See docs/mlflow/chat-quality-data-minio-plan.md for schema and bucket structure.
-"""
+"""Store chat quality data to MinIO for MLflow RAG quality pipelines."""
 import asyncio
 import json
 import logging
@@ -13,7 +10,6 @@ logger = logging.getLogger("chat_gateway")
 
 
 def _get_minio_client():
-    """Lazy import to avoid dependency when MinIO is not configured."""
     try:
         from minio import Minio
         return Minio
@@ -22,7 +18,6 @@ def _get_minio_client():
 
 
 def _derive_topic_from_collection(collection: str | None) -> str:
-    """Extract topic from collection name, e.g. rag_docs_cointutor -> cointutor."""
     if not collection:
         return "default"
     if "_" in collection:
@@ -62,9 +57,7 @@ async def record_chat_to_minio(
     secret_key = (settings.minio_secret_key or "").strip()
 
     if not endpoint or not access_key or not secret_key:
-        logger.info(
-            "Chat quality MinIO: skipped (MINIO_ENDPOINT/ACCESS_KEY/SECRET_KEY not configured)"
-        )
+        logger.debug("Chat quality MinIO: skipped (not configured)")
         return None
 
     if not question and not answer:
@@ -120,7 +113,6 @@ async def record_chat_to_minio(
     object_path = f"{project}/{topic_val}/raw/{date_path}/{log_id}.json"
 
     def _upload():
-        # Parse endpoint: "host:port", "http://host:port", or "https://host:port"
         ep = (endpoint or "").strip()
         secure = ep.startswith("https")
         if ep.startswith("http://"):
@@ -154,13 +146,7 @@ async def record_chat_to_minio(
         return object_path
 
     try:
-        # Run blocking MinIO call in thread pool to avoid blocking chat response
         return await asyncio.to_thread(_upload)
     except Exception as e:
-        logger.warning(
-            "Failed to store chat quality to MinIO: %s (path=%s)",
-            e,
-            object_path,
-            exc_info=False,
-        )
+        logger.warning("Failed to store chat quality to MinIO: %s (path=%s)", e, object_path, exc_info=False)
         return None

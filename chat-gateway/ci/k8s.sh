@@ -1008,12 +1008,8 @@ deploy_to_kubernetes() {
         # Deploy new resources
         kubectl -n ${NAMESPACE} apply -f ci/k8s.yaml
 
-        # Determine deployment name by branch
-        if [ "${GIT_BRANCH}" = "main" ]; then
-            DEPLOYMENT_NAME="drillquiz"
-        else
-            DEPLOYMENT_NAME="drillquiz-${SECRET_SUFFIX}"
-        fi
+        # Deployment name = APP_NAME (e.g. chat-inference, chat-gateway; k8s Deployment metadata.name matches)
+        DEPLOYMENT_NAME="${APP_NAME}"
 
         # Wait for deployment to be ready
         kubectl -n ${NAMESPACE} rollout status deployment/${DEPLOYMENT_NAME} --timeout=300s

@@ -1,10 +1,11 @@
-"""Auth: JWT decode, API key. Same as chat-gateway."""
+"""Auth: JWT decode, API key."""
 import logging
 import jwt
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 
 from app.config import get_settings
+from app.services.system_config import get_allowed_system_ids_list
 
 logger = logging.getLogger("chat_inference")
 
@@ -23,7 +24,6 @@ class ChatIdentity:
 
 
 def _check_system_id(system_id: str) -> None:
-    from app.services.system_config import get_allowed_system_ids_list
     allowed = get_allowed_system_ids_list()
     if not allowed:
         return
@@ -38,10 +38,16 @@ def decode_jwt(token: str) -> ChatIdentity:
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
+        logger.warning("JWT decode failed: token expired")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     except jwt.InvalidSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token signature")
-    except jwt.InvalidTokenError:
+        logger.warning("JWT decode failed: invalid signature (check CHAT_GATEWAY_JWT_SECRET)")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token signature. Ensure server CHAT_GATEWAY_JWT_SECRET matches the value used when issuing the token. Try issuing a new token after restarting the server.",
+        )
+    except jwt.InvalidTokenError as e:
+        logger.warning("JWT decode failed: %s", e)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
     system_id = payload.get("system_id")
     user_id = payload.get("user_id")
@@ -55,6 +61,7 @@ async def get_identity_optional(
     api_key: str = Security(API_KEY_HEADER),
     bearer: HTTPAuthorizationCredentials | None = Security(BEARER),
 ) -> ChatIdentity | None:
+    """If JWT: return identity. If API Key: None (use system_id/user_id from body)."""
     if bearer:
         return decode_jwt(bearer.credentials)
     if api_key:

@@ -1,7 +1,8 @@
+"""Auth: JWT decode, API key."""
 import logging
 import jwt
 from fastapi import HTTPException, Security, status
-from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
+from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.services.system_config import get_allowed_system_ids_list

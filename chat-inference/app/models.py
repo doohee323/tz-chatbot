@@ -1,12 +1,11 @@
-"""Models: SyncUser, ConversationMapping, ConversationCache, MessageCache. Same as chat-gateway."""
-from datetime import datetime
 from sqlalchemy import String, DateTime, Text, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
-
+from datetime import datetime
 from app.database import Base
 
 
 class SyncUser(Base):
+    """User who accessed the chat page (/chat). Registered so embed-only users are included in sync targets."""
     __tablename__ = "sync_users"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

@@ -12,6 +12,7 @@ logger = logging.getLogger("chat_inference")
 
 
 def _upsert_insert(table):
+    """Return dialect-specific insert that supports on_conflict_do_update (PostgreSQL or SQLite)."""
     url = get_settings().effective_database_url
     if "postgresql" in url:
         from sqlalchemy.dialects.postgresql import insert
@@ -37,7 +38,11 @@ async def _upsert_message(
         synced_at=datetime.utcnow(),
     ).on_conflict_do_update(
         index_elements=["message_id"],
-        set_={"content": content, "created_at": created_at, "synced_at": datetime.utcnow()},
+        set_={
+            "content": content,
+            "created_at": created_at,
+            "synced_at": datetime.utcnow(),
+        },
     )
     await db.execute(stmt)
 
@@ -54,7 +59,7 @@ async def record_chat_to_db(
 ) -> None:
     """Record one chat to DB right after pipeline response."""
     now = datetime.utcnow()
-    stmt = _upsert_insert(ConversationCache).values(
+    stmt_conv = _upsert_insert(ConversationCache).values(
         system_id=system_id,
         user_id=user_id,
         dify_user=dify_user,
@@ -66,7 +71,7 @@ async def record_chat_to_db(
         index_elements=["conversation_id"],
         set_={"synced_at": now},
     )
-    await db.execute(stmt)
+    await db.execute(stmt_conv)
     mid = message_id or f"local-{uuid.uuid4().hex[:12]}"
     await _upsert_message(db, conversation_id, f"{mid}_user", "user", user_query or "", now)
     await _upsert_message(db, conversation_id, f"{mid}_assistant", "assistant", assistant_answer or "", now)
@@ -78,6 +83,8 @@ async def register_sync_user(
     user_id: str,
     dify_user: str,
 ) -> None:
+    """Register (system_id, user_id) as sync target when user opens chat page. Embed-only users are included."""
+    logger.debug("register_sync_user: system_id=%s user_id=%s", system_id, user_id)
     stmt = _upsert_insert(SyncUser).values(
         system_id=system_id,
         user_id=user_id,

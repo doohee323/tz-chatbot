@@ -82,3 +82,8 @@ app.include_router(chat.router)
 app.include_router(chat_page.router)
 app.include_router(cache_view.router)
 app.include_router(debug.router)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

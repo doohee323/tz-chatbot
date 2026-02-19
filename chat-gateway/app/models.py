@@ -5,7 +5,6 @@ from app.database import Base
 
 
 class ChatSystem(Base):
-    """System config (drillquiz, cointutor). Same schema as chat-admin; table created by gateway for local SQLite."""
     __tablename__ = "chat_systems"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -50,7 +49,6 @@ class ConversationMapping(Base):
 
 
 class ConversationCache(Base):
-    """Cache of Dify conversation list fetched and stored periodically."""
     __tablename__ = "conversation_cache"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -64,7 +62,6 @@ class ConversationCache(Base):
 
 
 class MessageCache(Base):
-    """Cache of Dify conversation messages fetched and stored periodically."""
     __tablename__ = "message_cache"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

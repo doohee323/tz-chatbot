@@ -1,4 +1,4 @@
-"""Jinja2 templates. Same as chat-gateway."""
+"""Jinja2 templates."""
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
 

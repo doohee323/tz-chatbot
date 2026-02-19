@@ -1,6 +1,6 @@
-from pydantic_settings import BaseSettings
-from pydantic import Field, computed_field
 from functools import lru_cache
+from pydantic import Field, computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Default origins for CORS and /v1/chat-token (when ALLOWED_CHAT_TOKEN_ORIGINS is empty). Keep in sync with main.py CORS.
 CHAT_TOKEN_ORIGINS_DEFAULT = [
@@ -19,13 +19,17 @@ CHAT_TOKEN_ORIGINS_DEFAULT = [
     "http://localhost:8080",
     "http://localhost:8000",
     "http://localhost:8088",
+    "http://localhost:8090",
     "http://127.0.0.1:8080",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:8088",
+    "http://127.0.0.1:8090",
 ]
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
     # Shared Dify (can leave empty if using only per-system)
     dify_base_url: str = Field("", validation_alias="DIFY_BASE_URL")
     dify_api_key: str = Field("", validation_alias="DIFY_API_KEY")
@@ -36,9 +40,9 @@ class Settings(BaseSettings):
     dify_cointutor_api_key: str = Field("", validation_alias="DIFY_COINTUTOR_API_KEY")
     jwt_secret: str = Field(..., validation_alias="CHAT_GATEWAY_JWT_SECRET")
     api_keys: str = Field("", validation_alias="CHAT_GATEWAY_API_KEY")
-    allowed_system_ids: str = ""
+    allowed_system_ids: str = Field("", validation_alias="ALLOWED_SYSTEM_IDS")
     # Allowed origins for /v1/chat-token (comma-separated). Empty = no check.
-    allowed_chat_token_origins: str = ""
+    allowed_chat_token_origins: str = Field("", validation_alias="ALLOWED_CHAT_TOKEN_ORIGINS")
     # Explicit DATABASE_URL overrides. Otherwise: SQLite locally, PostgreSQL when POSTGRES_HOST is set (K8s).
     database_url: str = Field("", validation_alias="DATABASE_URL")
     postgres_host: str = Field("", validation_alias="POSTGRES_HOST")
@@ -110,10 +114,6 @@ class Settings(BaseSettings):
         if not self.allowed_chat_token_origins.strip():
             return []
         return [s.strip() for s in self.allowed_chat_token_origins.split(",") if s.strip()]
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
 
 
 @lru_cache
