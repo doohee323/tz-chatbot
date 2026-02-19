@@ -80,7 +80,7 @@ kind: ConfigMap
 metadata:
   name: chat-inference-configmap-GIT_BRANCH
 data:
-  ALLOWED_SYSTEM_IDS: "drillquiz,cointutor"
+  ALLOWED_SYSTEM_IDS: "drillquiz,cointutor,cointutor2"
   ALLOWED_CHAT_TOKEN_ORIGINS: ""
   POSTGRES_HOST: "devops-postgres-postgresql.devops.svc.cluster.local"
   POSTGRES_PORT: "5432"
