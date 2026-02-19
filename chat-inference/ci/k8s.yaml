@@ -86,7 +86,7 @@ data:
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "chat_admin"
   POSTGRES_USER: "postgres"
-  CHAT_ADMIN_URL: "http://localhost:8080"
+  CHAT_ADMIN_URL: "https://chat-admin.DOMAIN_PLACEHOLDER"
   RAG_BACKEND_URL: "http://rag-backend.rag.svc.cluster.local:8000"
 
 ---
