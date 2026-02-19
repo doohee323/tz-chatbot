@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     # Path to expected_questions YAML for ground_truth/keywords enrichment in MinIO logs. Empty = skip.
     expected_questions_path: str = Field("", validation_alias="EXPECTED_QUESTIONS_PATH")
 
+    # Chat Inference: Dify-free backend. When set, /v1/chat calls chat-inference instead of Dify.
+    # K8s: http://chat-inference.devops.svc.cluster.local:8090
+    # Local: http://localhost:8090
+    chat_inference_url: str = Field("", validation_alias="CHAT_INFERENCE_URL")
+
     @computed_field
     @property
     def effective_database_url(self) -> str:

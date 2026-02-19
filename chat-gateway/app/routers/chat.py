@@ -9,7 +9,8 @@ from app.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import API_KEY_HEADER, get_identity_from_body, get_identity_optional, ChatIdentity
 from app.config import CHAT_TOKEN_ORIGINS_DEFAULT, get_settings
-from app.dify_client import delete_conversation, get_conversation_messages, get_conversations, send_chat_message
+from app.dify_client import delete_conversation, get_conversation_messages, get_conversations, send_chat_message as send_dify_message
+from app.inference_client import send_chat_message as send_inference_message
 from app.services.system_config import (
     get_allowed_system_ids_list,
     get_dify_api_key,
@@ -94,12 +95,17 @@ logger = logging.getLogger("chat_gateway")
 
 @router.get("/status")
 async def get_status():
-    """Returns only whether Dify integration is configured (no key/URL exposure). For 502 troubleshooting."""
+    """Returns only whether chat backend (Dify or chat-inference) is configured. For 502 troubleshooting."""
+    settings = get_settings()
+    inference_url = (settings.chat_inference_url or "").strip()
     systems = {}
     for sid in get_allowed_system_ids_list():
-        base = (get_dify_base_url(sid) or "").strip()
-        key = (get_dify_api_key(sid) or "").strip()
-        systems[sid] = {"configured": bool(base and key), "has_base_url": bool(base), "has_api_key": bool(key)}
+        if inference_url:
+            systems[sid] = {"backend": "chat_inference", "configured": True, "has_base_url": True}
+        else:
+            base = (get_dify_base_url(sid) or "").strip()
+            key = (get_dify_api_key(sid) or "").strip()
+            systems[sid] = {"backend": "dify", "configured": bool(base and key), "has_base_url": bool(base), "has_api_key": bool(key)}
     return {"systems": systems}
 
 
@@ -135,48 +141,77 @@ async def post_chat(
     uid = body.user_id or (identity.user_id if identity else None)
     ident = _resolve_identity(identity, body, api_key, system_id=sid, user_id=uid)
 
-    dify_key = get_dify_api_key(ident.system_id)
-    dify_base = get_dify_base_url(ident.system_id)
-    if not dify_key or not dify_base:
-        logger.warning(
-            "Chat not configured for system_id=%s (missing Dify API key or base URL)",
-            ident.system_id,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Chat is not configured for this app.",
-        )
-
-    try:
-        result = await send_chat_message(
-            user=ident.dify_user,
-            query=body.message,
-            conversation_id=body.conversation_id,
-            inputs=body.inputs,
-            system_id=ident.system_id,
-        )
-    except httpx.HTTPStatusError as e:
-        logger.warning(
-            "Dify API error for system_id=%s: %s %s",
-            ident.system_id,
-            e.response.status_code,
-            (e.response.text or "")[:500],
-        )
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Chat service temporarily unavailable. Please try again.",
-        )
-    except httpx.RequestError as e:
-        logger.warning(
-            "Dify request error for system_id=%s: %s",
-            ident.system_id,
-            e,
-            exc_info=True,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Chat service temporarily unavailable. Please try again.",
-        )
+    inference_url = (get_settings().chat_inference_url or "").strip()
+    if inference_url:
+        # Dify-free: use chat-inference (same Qdrant via RAG Backend)
+        try:
+            result = await send_inference_message(
+                user=ident.dify_user,
+                query=body.message,
+                conversation_id=body.conversation_id,
+                inputs=body.inputs,
+                base_url=inference_url,
+            )
+        except httpx.HTTPStatusError as e:
+            logger.warning(
+                "Chat Inference error for system_id=%s: %s %s",
+                ident.system_id,
+                e.response.status_code,
+                (e.response.text or "")[:500],
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Chat service temporarily unavailable. Please try again.",
+            )
+        except httpx.RequestError as e:
+            logger.warning("Chat Inference request error for system_id=%s: %s", ident.system_id, e, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Chat service temporarily unavailable. Please try again.",
+            )
+    else:
+        # Dify backend (legacy)
+        dify_key = get_dify_api_key(ident.system_id)
+        dify_base = get_dify_base_url(ident.system_id)
+        if not dify_key or not dify_base:
+            logger.warning(
+                "Chat not configured for system_id=%s (missing Dify API key or base URL)",
+                ident.system_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Chat is not configured for this app.",
+            )
+        try:
+            result = await send_dify_message(
+                user=ident.dify_user,
+                query=body.message,
+                conversation_id=body.conversation_id,
+                inputs=body.inputs,
+                system_id=ident.system_id,
+            )
+        except httpx.HTTPStatusError as e:
+            logger.warning(
+                "Dify API error for system_id=%s: %s %s",
+                ident.system_id,
+                e.response.status_code,
+                (e.response.text or "")[:500],
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Chat service temporarily unavailable. Please try again.",
+            )
+        except httpx.RequestError as e:
+            logger.warning(
+                "Dify request error for system_id=%s: %s",
+                ident.system_id,
+                e,
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Chat service temporarily unavailable. Please try again.",
+            )
 
     conversation_id = result.get("conversation_id") or ""
     message_id = result.get("message_id")
