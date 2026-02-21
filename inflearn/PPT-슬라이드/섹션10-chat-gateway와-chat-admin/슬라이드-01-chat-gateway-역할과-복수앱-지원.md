@@ -2,10 +2,18 @@
 
 ## 슬라이드 내용 (한 장)
 
-**chat-gateway 역할**  
-• **채팅 API 단일 진입점**: DrillQuiz·CoinTutor 등 여러 클라이언트 앱이 각각 Dify에 붙지 않고 gateway로만 요청  
-• system_id에 따라 해당 Dify 앱·API Key 선택 후 Dify API 호출  
-• 대화·메시지 DB 저장, JWT로 사용자·앱 구분. /chat, /v1/chat, /v1/conversations, /v1/chat-token 등 제공
+**chat-gateway 역할**
+• **채팅 API 단일 진입점**: DrillQuiz·CoinTutor 등 여러 클라이언트 앱이 각각 Dify에 붙지 않고 gateway로만 요청
+• system_id에 따라 해당 Dify 앱·API Key 선택 후 Dify API 호출
+• 대화·메시지 DB 저장, JWT로 사용자·앱 구분
+
+**API 엔드포인트**
+• 채팅: `/chat` (페이지), `/chat-api` (별칭), `/v1/chat` (메시지 전송)
+• 대화 조회: `/v1/conversations`, `/v1/conversations/{id}/messages`
+• 토큰: `/v1/chat-token` (JWT 발급), `/v1/chat-token-guest` (guest 토큰)
+• 캐시: `/cache` (히스토리 UI), `/v1/cache/conversations`, `/v1/cache/conversations/{id}/messages`
+• 관리: `/v1/admin/register`, `/v1/admin/login` (관리자 회원가입/로그인)
+• 동기화: `/v1/sync` (Dify→DB 동기화)
 
 **복수 앱 지원: DB·배치**  
 • **chat_admin DB**: chat-gateway·chat-admin 공유. 시스템(앱) 등록·설정, 대화·메시지 저장·조회. system_id 단위로 Dify URL·API Key 저장  

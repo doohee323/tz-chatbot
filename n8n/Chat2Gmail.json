@@ -1,0 +1,136 @@
+{
+  "name": "Chat2Gmail",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "",
+        "height": 208,
+        "width": 230,
+        "color": 3
+      },
+      "id": "81da8e9a-d788-4eed-8921-793fd151e235",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        992
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fa43a283-e401-46e3-bf3c-9cc7fb7dae2f",
+              "name": "quote",
+              "type": "string",
+              "value": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d5a71108-ff33-4214-9662-510d9d30adfc",
+      "name": "Results",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        704,
+        1024
+      ],
+      "notesInFlow": true,
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "sendTo": "doohee323@gmail.com",
+        "subject": "Daily quote",
+        "emailType": "text",
+        "message": "=Hey,\n\nHere's a quote by {{ $json.author }}:\n\n\"{{ $json.quote }}\"",
+        "options": {}
+      },
+      "id": "41b56311-e6b1-4b57-9178-47ed568550d3",
+      "name": "Connect your Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1104,
+        1024
+      ],
+      "webhookId": "83a06a0c-4824-44ea-b593-18917e1b3fe4",
+      "notesInFlow": true,
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Nn42ot2O6dguZ9A7",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "Double-click here to connect!"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        384,
+        1024
+      ],
+      "id": "b03e9286-0765-4b76-8cc3-114615115ceb",
+      "name": "When chat message received",
+      "webhookId": "d3551a88-1864-444d-be37-d5a4665779c6",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "yY1iPWJRHqiUJECT",
+          "name": "Unnamed credential"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Results": {
+      "main": [
+        [
+          {
+            "node": "Connect your Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "America/Los_Angeles",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 120
+  },
+  "versionId": "ad7391f5-861e-432f-9afd-968d06c3a468",
+  "meta": {
+    "templateId": "8527",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6ed00e82e89a25b0ea2d79cb1a5b8a17a74cfe159cdbdcfd7179123a6b1fd513"
+  },
+  "id": "H2vCqMtiJRfJLvK8HuJN_",
+  "tags": []
+}

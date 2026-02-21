@@ -1,0 +1,132 @@
+# Dify Workflow: Google Calendar 일정 발생 시 이메일 발송
+# - 트리거: Google Calendar (플러그인)
+# - 일정 이벤트 수신 → 이메일 발송
+# 사용 전: Dify에서 Google Calendar Trigger, Email 플러그인 설치 및 OAuth/설정 완료 후
+# Studio > Workflow 앱 생성 > Import from YAML 로 임포트
+
+app:
+  description: Google Calendar 일정 발생 시 지정 수신자에게 이메일 발송
+  icon: 📅
+  icon_background: '#E8F5E9'
+  mode: workflow
+  name: Calendar-Email-Workflow
+  use_icon_as_answer_icon: false
+
+dependencies:
+  - type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/google_calendar_trigger:0.0.1@6afd18607b0cf299a253f314b88f5a89fbbdf6d1d529ebebe3dfc1998952779a
+    current_identifier: null
+  - type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/email:0.0.5@b0bf4aa3062c9b41ce3eaac8e4ea1987f7daef614702b4f3a11755629b35bb28
+    current_identifier: null
+
+kind: app
+version: 0.5.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features: {}
+  graph:
+    edges:
+      # Google Calendar Trigger → Code (이벤트 포맷)
+      - id: n1001-source-n1002-target
+        source: '1001'
+        sourceHandle: source
+        target: '1002'
+        targetHandle: target
+        type: custom
+        data:
+          sourceType: plugin_trigger
+          targetType: code
+          isInLoop: false
+      # Code → Email
+      - id: n1002-source-n1003-target
+        source: '1002'
+        sourceHandle: source
+        target: '1003'
+        targetHandle: target
+        type: custom
+        data:
+          sourceType: code
+          targetType: tool
+          isInLoop: false
+
+    nodes:
+      # 1) Google Calendar Trigger
+      - id: '1001'
+        type: custom
+        position: { x: 80, y: 200 }
+        data:
+          title: Google Calendar Trigger
+          type: plugin_trigger
+          selected: false
+          plugin_id: langgenius/google_calendar_trigger
+          plugin_unique_identifier: langgenius/google_calendar_trigger:0.0.1@6afd18607b0cf299a253f314b88f5a89fbbdf6d1d529ebebe3dfc1998952779a
+          trigger_config: {}
+        width: 242
+        height: 54
+
+      # 2) Code: 캘린더 이벤트 → 이메일 제목/본문 생성
+      - id: '1002'
+        type: custom
+        position: { x: 380, y: 200 }
+        data:
+          title: 이벤트 → 이메일 내용
+          type: code
+          selected: false
+          variables: []
+          code: |
+            def main(trigger_event: dict) -> dict:
+                # Google Calendar 이벤트에서 제목/시간/설명 추출 (실제 페이로드는 플러그인 문서 참고)
+                event = trigger_event.get("event", trigger_event)
+                summary = event.get("summary", "일정 알림")
+                start = event.get("start", {}).get("dateTime") or event.get("start", {}).get("date", "")
+                description = event.get("description", "")
+                return {
+                    "subject": f"[캘린더] {summary}",
+                    "body": f"일정: {summary}\n시작: {start}\n\n{description}"
+                }
+          code_language: python3
+          output_schema:
+            type: object
+            properties:
+              subject: { type: string, description: "email subject" }
+              body: { type: string, description: "email body" }
+        width: 242
+        height: 54
+
+      # 3) Email 도구
+      - id: '1003'
+        type: custom
+        position: { x: 680, y: 200 }
+        data:
+          title: 이메일 발송
+          type: tool
+          selected: false
+          is_team_authorization: true
+          provider_type: builtin
+          provider_id: langgenius/email/email
+          provider_name: langgenius/email/email
+          plugin_id: langgenius/email
+          plugin_unique_identifier: langgenius/email:0.0.5@b0bf4aa3062c9b41ce3eaac8e4ea1987f7daef614702b4f3a11755629b35bb28
+          tool_name: send_email
+          tool_label: Send Email
+          tool_description: Send an email
+          tool_parameters:
+            to: { type: variable, value: [] }
+            subject: { type: variable, value: ['1002', 'subject'] }
+            body: { type: variable, value: ['1002', 'body'] }
+          paramSchemas: []
+          params: {}
+        width: 242
+        height: 52
+
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1
+
+  workflow_variables: []

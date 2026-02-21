@@ -25,3 +25,7 @@ __pycache__/
 
 # Node
 node_modules/
+
+# n8n-as-code AI helpers
+n8nac-skills
+n8nac-skills.cmd

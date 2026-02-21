@@ -1,0 +1,349 @@
+{
+  "name": "Chat2Jenkins",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        208,
+        304
+      ],
+      "id": "chat-trigger",
+      "name": "When chat message received",
+      "webhookId": "chat-webhook-id",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "i29ZNa7zTtBaDRIn",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "job-name-id",
+              "name": "jobName",
+              "type": "string",
+              "value": "={{ $json.content.parts[0].text }}"
+            },
+            {
+              "id": "jenkins-url-id",
+              "name": "jenkinsUrl",
+              "type": "string",
+              "value": "=https://jenkins.drillquiz.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-job",
+      "name": "Extract Job Name",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        784,
+        304
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.jenkinsUrl }}/job/{{ $json.jobName }}/build",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "id": "trigger-build",
+      "name": "Trigger Jenkins Build",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1008,
+        304
+      ],
+      "typeVersion": 4.1,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jbOqKr4jTV4pVj04",
+          "name": "Unnamed credential 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "wait-build",
+      "name": "Wait for Build",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1232,
+        304
+      ],
+      "typeVersion": 1.1,
+      "webhookId": "3f8faa65-5ba6-4926-a0c1-258ec5c19046"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "preserve-job",
+              "name": "jobName",
+              "type": "string",
+              "value": "={{ $('Extract Job Name').item.json.jobName }}"
+            },
+            {
+              "id": "preserve-url",
+              "name": "jenkinsUrl",
+              "type": "string",
+              "value": "=https://jenkins.drillquiz.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "preserve-data",
+      "name": "Preserve Job Data",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1456,
+        304
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.jenkinsUrl }}/job/{{ $json.jobName }}/lastBuild/api/json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "id": "get-status",
+      "name": "Get Build Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1680,
+        304
+      ],
+      "typeVersion": 4.1,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jbOqKr4jTV4pVj04",
+          "name": "Unnamed credential 3"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "final-job",
+              "name": "jobName",
+              "type": "string",
+              "value": "={{ $('Preserve Job Data').item.json.jobName }}"
+            },
+            {
+              "id": "final-status",
+              "name": "buildStatus",
+              "type": "string",
+              "value": "={{ $json.inProgress }}"
+            },
+            {
+              "id": "final-url",
+              "name": "buildUrl",
+              "type": "string",
+              "value": "={{ $json.url || ('https://jenkins.drillquiz.com/job/' + ($input.first().json.jobName || 'unknown')) }}"
+            },
+            {
+              "id": "final-result",
+              "name": "emailResult",
+              "type": "string",
+              "value": "={{ $json.result === 'SUCCESS' ? '✓ Success' : ($json.result === 'FAILURE' ? '✗ Failed' : '⏳ In progress/Error') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prepare-email",
+      "name": "Prepare Email",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1904,
+        304
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "sendTo": "doohee323@gmail.com",
+        "subject": "={{ $json.emailResult.includes('Success') ? '✓' : '✗' }} Jenkins: {{ $json.jobName }}",
+        "emailType": "text",
+        "message": "=====================================\nJenkins Build Result\n=====================================\n\nProject: {{ $json.jobName }}\nStatus: {{ $json.buildStatus }}\nResult: {{ $json.emailResult }}\n\nBuild #:{{ $('Get Build Status').item.json.number || 'N/A' }}\n\n=====================================\nView build details:\n{{ $json.buildUrl }}\n=====================================\n\nBuild result: {{ $('Extract Job Name').item.json.jenkinsUrl }}/job/{{ $json.jobName }}/lastBuild/",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2128,
+        304
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "e97ce144-7489-455f-a07d-fd26e9b2692f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "W9dhT5bLsTa6Pj9s",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "= {{ $json.chatInput }} Extract only the project name to build from this. No explanation needed. Just the name."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        304
+      ],
+      "id": "cdcb708f-4ddf-435d-b7e3-1e88988a8985",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "17EcJo2DzLJNuRmR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Job Name": {
+      "main": [
+        [
+          {
+            "node": "Trigger Jenkins Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Jenkins Build": {
+      "main": [
+        [
+          {
+            "node": "Wait for Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Build": {
+      "main": [
+        [
+          {
+            "node": "Preserve Job Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Job Data": {
+      "main": [
+        [
+          {
+            "node": "Get Build Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Build Status": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Extract Job Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "timezone": "America/Los_Angeles",
+    "executionOrder": "v0",
+    "binaryMode": "separate",
+    "executionTimeout": 600
+  },
+  "versionId": "2b3b5651-7353-48d5-972b-4e7ae4957b41",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6ed00e82e89a25b0ea2d79cb1a5b8a17a74cfe159cdbdcfd7179123a6b1fd513"
+  },
+  "id": "fh7zlso5AijsS2ou",
+  "tags": []
+}

@@ -133,6 +133,34 @@ Set `KUBECONFIG` or `DIFY_NS` (default dify) if needed.
 2. Open the **app** that errors → in **Orchestrate (workflow)** open nodes that use a model (LLM, question classifier, etc.) and set **Model** to the **new provider/model** you just registered, then save.
 3. If it still errors, **duplicate** the app and in the duplicate workflow re-select model/provider for all nodes, or rebuild the app from scratch.
 
+### Plugin trigger / webhook callback URL shows `http://localhost:5001`
+
+**Cause**: The base URL for plugin trigger and webhook callbacks is set by **TRIGGER_URL**. If unset, Dify defaults to `http://localhost:5001`.
+
+**Fix**: Set `TRIGGER_URL` in `api.extraEnv` to your public URL (e.g. `https://dify.drillquiz.com`). In `values.yaml` use `DIFY_BASE_URL_REPLACE`; in `values.yaml_bak` set the value explicitly. Then `helm upgrade` and restart the API pods.
+
+**Verify in K8s** (replace `dify` with your namespace if different):
+
+```bash
+# Env in running dify-api pod (TRIGGER_URL, CONSOLE_API_URL, etc.)
+kubectl get deployment dify-api -n dify -o jsonpath='{range .spec.template.spec.containers[0].env[*]}{.name}={.value}{"\n"}{end}' | grep -E 'TRIGGER_URL|CONSOLE_API|SERVICE_API'
+
+# Or from a pod directly
+kubectl exec -n dify deployment/dify-api -- env | grep -E 'TRIGGER_URL|CONSOLE_API|SERVICE_API'
+```
+
+After changing env, ensure pods are restarted so they pick up the new value (e.g. `kubectl rollout restart deployment/dify-api -n dify`).
+
+### MCP server plugin shows `http://localhost:5002` / Console gets 401 after setting web URLs
+
+**Cause**: The MCP plugin UI shows endpoint URLs from the **frontend**’s idea of the app API base. The dify-web ConfigMap has `APP_API_URL` / `CONSOLE_API_URL` empty by default, so the frontend uses the **current page origin** (e.g. `http://localhost:8080` when using port-forward). If you set these to a fixed URL (e.g. `https://dify.drillquiz.com`) in the **web** ConfigMap, the frontend sends all API requests to that URL. If you don’t open Dify at that exact URL (e.g. you use port-forward or `http://`), the session cookie is for a different origin, so requests to `https://dify.drillquiz.com` are sent **without cookies** → **401 Unauthorized**. Setting these URLs can also cause **JS errors and the screen not loading** (frontend may mishandle the base URL). The same 401/errors can happen if you set `CONSOLE_WEB_URL` in **api** extraEnv.
+
+**Recommendation**:
+
+- **Leave** `APP_API_URL` and `CONSOLE_API_URL` in the **dify-web** ConfigMap **empty**. Do **not** patch them to a fixed public URL unless you always access Dify at that URL (same origin).
+- **Leave** `CONSOLE_WEB_URL` in **api** extraEnv **commented out** in `values.yaml` if enabling it causes 401 for your access pattern.
+- The MCP endpoint list showing `localhost:5002` is then **cosmetic** when using port-forward or a different host: the **backend** (dify-api, TRIGGER_URL, etc.) already uses the correct public URL for callbacks; only the UI label is wrong. Use the app at **one** URL (ideally `https://dify.drillquiz.com`) so session and API are same origin and the UI can show the correct base if the chart ever injects it without breaking cookies.
+
 ---
 
 ## File layout
@@ -141,7 +169,7 @@ Set `KUBECONFIG` or `DIFY_NS` (default dify) if needed.
 |------|-------------|
 | `install.sh` | Project/domain from props, Helm repo, values substitution, Dify install, Ingress. With `reinstall` deletes PVC then reinstalls |
 | `status.sh` | Install status (pods/svc/pvc/ingress). With `watch` refreshes in real time |
-| `values.yaml` | Images, API/worker env (Qdrant, S3/MinIO), NFS PVC, PostgreSQL/Redis, Weaviate disabled |
+| `values.yaml` | Images, API/worker env (Qdrant, S3/MinIO), NFS PVC, PostgreSQL/Redis, Weaviate disabled. Includes OTEL_* env for OpenTelemetry (effective when Dify adds OTLP support; see langgenius/dify#25113). |
 | `dify-ingress.yaml` | Jenkins-style Ingress |
 | `cointutor/cointutor-rag-openapi.yaml` | CoinTutor RAG OpenAPI schema (paste in UI when creating custom tool) |
 | `cointutor/CoinTutor.yml` | CoinTutor app template |

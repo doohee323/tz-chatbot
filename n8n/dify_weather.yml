@@ -1,0 +1,181 @@
+app:
+  description: Calandar-Email
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: Calandar-Email
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.5.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: http-request
+      id: 1771607756546-source-1771607936594-target
+      source: '1771607756546'
+      sourceHandle: source
+      target: '1771607936594'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: http-request
+        targetType: end
+      id: 1771607936594-source-1771608393675-target
+      source: '1771607936594'
+      sourceHandle: source
+      target: '1771608393675'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: User Input
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: query
+          max_length: 48
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: query
+      height: 109
+      id: '1771607756546'
+      position:
+        x: 200.83466600680617
+        y: 113.6945723476629
+      positionAbsolute:
+        x: 200.83466600680617
+        y: 113.6945723476629
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-60
+            key: ''
+            type: text
+            value: '{"sessionId":"11111","chatInput":"{{{#1771607756546.query#}}"}'
+          type: json
+        headers: Authorization:Basic ZG9vaGVlMzIzOkhvbmdkb29oZWUhMzIz
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP Request
+        type: http-request
+        url: https://n8n.drillquiz.com/webhook/e5616171-e3b5-4c39-81d4-67409f9fa60a/chat
+        variables: []
+      height: 153
+      id: '1771607936594'
+      position:
+        x: 520.8146278709936
+        y: 163.28812826921455
+      positionAbsolute:
+        x: 520.8146278709936
+        y: 163.28812826921455
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1771607936594'
+          - body
+          value_type: string
+          variable: body
+        selected: false
+        title: Output
+        type: end
+      height: 88
+      id: '1771608393675'
+      position:
+        x: 933.6664033942478
+        y: 166.16514412651972
+      positionAbsolute:
+        x: 933.6664033942478
+        y: 166.16514412651972
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 184.94803108323822
+      y: 103.48784965531775
+      zoom: 0.6951647468059259
+  rag_pipeline_variables: []

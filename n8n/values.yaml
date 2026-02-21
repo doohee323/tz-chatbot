@@ -1,0 +1,53 @@
+# n8n Helm Chart Values (community-charts/n8n)
+#
+# 전체 옵션: helm show values community-charts/n8n
+#
+# 설치: bash install.sh
+#
+# DB: dify-postgresql-primary 에 n8n 스키마만 추가해서 사용
+# Secret 생성: kubectl get secret dify-postgresql -n dify -o jsonpath='{.data.postgres-password}' | base64 -d | xargs -I{} kubectl create secret generic n8n-postgresql -n n8n --from-literal=postgres-password={}
+
+# Ingress는 n8n-ingress.yaml 로 별도 적용 (minio 패턴)
+ingress:
+  enabled: false
+
+# DB: 기존 dify PostgreSQL 사용, 스키마 n8n 에 테이블 생성
+db:
+  type: postgresdb
+  postgresdb:
+    schema: n8n
+
+externalPostgresql:
+  host: dify-postgresql-primary.dify.svc.cluster.local
+  port: 5432
+  database: dify
+  username: postgres
+  existingSecret: n8n-postgresql
+
+postgresql:
+  enabled: false
+
+# Main pod: persistence (데이터 유지)
+main:
+  # Ingress/프록시 뒤에서 X-Forwarded-For 신뢰 (500 Error in workflow 방지)
+  # Origin 검증: 공식 URL 고정 시 "Expected: localhost:33254" 에러 방지
+  # 차트가 editorBaseUrl 미지원 시 extraEnvVars에 N8N_EDITOR_BASE_URL: "https://n8n.drillquiz.com" 추가
+  editorBaseUrl: "https://n8n.drillquiz.com"
+  extraEnvVars:
+    N8N_PROXY_HOPS: "1"
+    N8N_EDITOR_BASE_URL: "https://n8n.drillquiz.com"
+    # port-forward(localhost:33254) 사용 시 허용하려면:
+    # N8N_ALLOW_CONNECTIONS_FROM: "https://n8n.drillquiz.com,http://localhost:33254"
+  persistence:
+    enabled: true
+    storageClass: nfs-client
+    size: 5Gi
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+  # Editor URL 미설정 시 Ingress host 사용
+  # editorBaseUrl: "https://n8n.k8s_domain"

@@ -1,0 +1,303 @@
+{
+  "name": "RegionNewsSummaryEmail",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        400
+      ],
+      "webhookId": "59ae7b89-4160-4291-bc30-09850347ec3c",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "i29ZNa7zTtBaDRIn",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "region-assign",
+              "name": "region",
+              "type": "string",
+              "value": "={{ $json.chatInput?.trim() || \"서울\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Set region",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "region-news",
+        "responseMode": "immediately",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Webhook region",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        592
+      ],
+      "webhookId": "9707e672-a26e-4411-a683-3cf5fee0bc4c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "region-webhook-assign",
+              "name": "region",
+              "type": "string",
+              "value": "={{ ($json.body && $json.body.region ? $json.body.region : $json.region) || $json.query?.region || \"서울\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Set region from webhook",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://news.google.com/rss/search?q={{ encodeURIComponent($json.region) }}&hl=ko&gl=KR&ceid=KR:ko",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Fetch news RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        688,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst region = items[0]?.json?.region || '서울';\nlet newsText = '';\nfor (const item of items) {\n  const body = item.json?.body || item.binary?.data?.toString('utf-8') || '';\n  const titles = body.match(/<title>[^<]+<\\/title>/g) || [];\n  const links = body.match(/<link>[^<]+<\\/link>/g) || [];\n  for (let i = 0; i < Math.min(15, titles.length); i++) {\n    const t = (titles[i] || '').replace(/<\\/?title>/g, '').trim();\n    const l = (links[i + 1] || links[i] || '').replace(/<\\/?link>/g, '').trim();\n    if (t && t !== 'Google News') newsText += (i + 1) + '. ' + t + '\\n   ' + l + '\\n';\n  }\n}\nif (!newsText) newsText = 'No articles found for region: ' + region;\nreturn [{ json: { region, newsText, itemCount: newsText.split('\\n').filter(x => /^\\d+\\./.test(x)).length } }];"
+      },
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "Parse and prepare news",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {}
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Summarize with Gemini",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        608
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "17EcJo2DzLJNuRmR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "summary-assign",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $json.text || $json.output || '' }}"
+            },
+            {
+              "id": "region-assign-2",
+              "name": "region",
+              "type": "string",
+              "value": "={{ $('Parse and prepare news').item.json.region }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-4000-8000-000000000009",
+      "name": "Set summary for email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "doohee323@gmail.com",
+        "subject": "={{ '오늘 ' + $json.region + ' 지역 뉴스 요약' }}",
+        "emailType": "text",
+        "message": "={{ $json.summary }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "name": "Send email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1424,
+        400
+      ],
+      "webhookId": "88e762c0-1793-4d82-ad20-b4d8f2454664",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "W9dhT5bLsTa6Pj9s",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Set region",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set region": {
+      "main": [
+        [
+          {
+            "node": "Fetch news RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook region": {
+      "main": [
+        [
+          {
+            "node": "Set region from webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set region from webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch news RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch news RSS": {
+      "main": [
+        [
+          {
+            "node": "Parse and prepare news",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse and prepare news": {
+      "main": [
+        [
+          {
+            "node": "Summarize with Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize with Gemini": {
+      "main": [
+        [
+          {
+            "node": "Set summary for email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set summary for email": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ba519fb6-f1cb-4bbe-bb96-0b47de4c63eb",
+  "meta": {
+    "instanceId": "6ed00e82e89a25b0ea2d79cb1a5b8a17a74cfe159cdbdcfd7179123a6b1fd513"
+  },
+  "id": "km7sVHmaib0LNVUE",
+  "tags": []
+}

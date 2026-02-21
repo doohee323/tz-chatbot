@@ -1,0 +1,533 @@
+app:
+  description: Calandar-Email
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: Calandar-Email
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/gemini:0.7.4@5faf411e694e0da130a337347a625a3812b1b7502a0183382d66d92c841bf05a
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/email:0.0.10@9943a2ef629e679fc31bd4da2349a19e1880d03187803d6b2d926db67ae413ad
+    version: null
+kind: app
+version: 0.5.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1771521600000-source-1771521657497-target
+      selected: false
+      source: '1771521600000'
+      sourceHandle: source
+      target: '1771521657497'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: tool
+      id: 1771521657497-source-1771521737745-target
+      selected: false
+      source: '1771521657497'
+      sourceHandle: source
+      target: '1771521737745'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: trigger-plugin
+        targetType: code
+      id: 1771569920244-source-1771521600000-target
+      source: '1771569920244'
+      sourceHandle: source
+      target: '1771521600000'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: trigger-plugin
+        targetType: code
+      id: 1771569980876-source-1771521600000-target
+      source: '1771569980876'
+      sourceHandle: source
+      target: '1771521600000'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        code: |
+          def main(trigger1=None, trigger2=None):
+              rst = trigger1 or trigger2
+              if rst is None:
+                  return {"events": []}
+              if isinstance(rst, list):
+                  return {"events": rst}
+              if isinstance(rst, dict):
+                  return {"events": rst.get("events", []) or []}
+              return {"events": []}
+        code_language: python3
+        output_schema:
+          properties:
+            events:
+              description: 캘린더 이벤트 배열
+              type: array
+          type: object
+        outputs:
+        - variable: events
+          type: array[object]
+        selected: true
+        title: 일정 데이터 합치기
+        type: code
+        variables:
+        - value_selector:
+          - '1771569920244'
+          - events
+          value_type: array[object]
+          variable: trigger1
+        - value_selector:
+          - '1771569980876'
+          - events
+          value_type: array[object]
+          variable: trigger2
+      height: 52
+      id: '1771521600000'
+      position:
+        x: 349.1428571428571
+        y: 226
+      positionAbsolute:
+        x: 349.1428571428571
+        y: 226
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gemini-2.5-flash
+          provider: langgenius/gemini/google
+        output_schema:
+          properties:
+            email_body:
+              description: 이메일 본문 (읽기 쉬운 문장)
+              type: string
+            subject:
+              description: 이메일 제목 한 줄
+              type: string
+          required:
+          - subject
+          - email_body
+          type: object
+        prompt_template:
+        - id: e4c33466-6761-4868-9944-4e01361610bf
+          role: system
+          text: '당신은 캘린더 일정을 읽기 쉬운 이메일 문장으로 정리하는 도우미입니다.
+
+
+            입력으로 Google Calendar 이벤트 데이터(JSON)를 받으면:
+
+
+            1) 이메일 제목: 한 줄로 요약 (예: [일정] 회의명, 2/15 14:00)
+
+
+            2) 이메일 본문: 일정명, 날짜/시간, 장소, 설명을 이해하기 쉽게 문장으로 정리해 주세요.
+
+
+            반드시 아래 구조의 JSON만 출력하세요. 다른 설명은 붙이지 마세요.
+
+
+            {"subject": "제목 문자열", "email_body": "본문 문자열"}
+
+            '
+        - id: a1b2c3d4-0000-4000-8000-000000000001
+          role: user
+          text: '다음 캘린더 일정 데이터를 이메일용으로 이해하기 쉽게 정리해 주세요.
+
+
+            {{#1771521600000.events#}}
+
+            '
+        selected: false
+        structured_output_enabled: true
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1771521657497'
+      position:
+        x: 704
+        y: 226
+      positionAbsolute:
+        x: 704
+        y: 226
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Recipient email account
+            ja_JP: Recipient email account
+            pt_BR: Recipient email account
+            zh_Hans: 收件人邮箱账号
+          label:
+            en_US: Recipient email account(json list)
+            ja_JP: Recipient email account(json list)
+            pt_BR: Recipient email account(json list)
+            zh_Hans: 收件人邮箱账号(json list)
+          llm_description: A list of recipient email account(json format)
+          max: null
+          min: null
+          name: send_to
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Reply-to email address
+            ja_JP: Reply-to email address
+            pt_BR: Reply-to email address
+            zh_Hans: 回复电子邮件地址
+          label:
+            en_US: Reply-to email address
+            ja_JP: Reply-to email address
+            pt_BR: Reply-to email address
+            zh_Hans: 回复电子邮件地址
+          llm_description: Reply-to email address
+          max: null
+          min: null
+          name: reply_to
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Carbon copy email account
+            ja_JP: Carbon copy email account
+            pt_BR: Carbon copy email account
+            zh_Hans: 抄送邮箱账号
+          label:
+            en_US: Carbon copy email account(json list)
+            ja_JP: Carbon copy email account(json list)
+            pt_BR: Carbon copy email account(json list)
+            zh_Hans: 抄送邮箱账号(json list)
+          llm_description: Carbon copy email account(json list)
+          max: null
+          min: null
+          name: cc
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Blind carbon copy email account
+            ja_JP: Blind carbon copy email account
+            pt_BR: Blind carbon copy email account
+            zh_Hans: 密送邮箱账号
+          label:
+            en_US: Blind carbon copy email account(json list)
+            ja_JP: Blind carbon copy email account(json list)
+            pt_BR: Blind carbon copy email account(json list)
+            zh_Hans: 密送邮箱账号(json list)
+          llm_description: Blind carbon copy email account(json list)
+          max: null
+          min: null
+          name: bcc
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: email subject
+            ja_JP: email subject
+            pt_BR: email subject
+            zh_Hans: 邮件主题
+          label:
+            en_US: email subject
+            ja_JP: email subject
+            pt_BR: email subject
+            zh_Hans: 邮件主题
+          llm_description: email subject
+          max: null
+          min: null
+          name: subject
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: email content
+            ja_JP: email content
+            pt_BR: email content
+            zh_Hans: 邮件内容
+          label:
+            en_US: email content
+            ja_JP: email content
+            pt_BR: email content
+            zh_Hans: 邮件内容
+          llm_description: email content
+          max: null
+          min: null
+          name: email_content
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: false
+          form: form
+          human_description:
+            en_US: Convert content from markdown to HTML
+            ja_JP: Convert content from markdown to HTML
+            pt_BR: Convert content from markdown to HTML
+            zh_Hans: 将内容从Markdown转换为HTML
+          label:
+            en_US: Convert to HTML
+            ja_JP: Convert to HTML
+            pt_BR: Convert to HTML
+            zh_Hans: 转换为HTML
+          llm_description: Whether to convert the email content from markdown to HTML
+            format
+          max: null
+          min: null
+          name: convert_to_html
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: boolean
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Files to attach to the email
+            ja_JP: Files to attach to the email
+            pt_BR: Files to attach to the email
+            zh_Hans: 要附加到电子邮件的文件
+          label:
+            en_US: File Attachments
+            ja_JP: File Attachments
+            pt_BR: File Attachments
+            zh_Hans: 文件附件
+          llm_description: Files to attach to the email
+          max: null
+          min: null
+          name: attachments
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: files
+        params:
+          attachments: ''
+          bcc: ''
+          cc: ''
+          convert_to_html: ''
+          email_content: ''
+          reply_to: ''
+          send_to: ''
+          subject: ''
+        plugin_id: langgenius/email
+        plugin_unique_identifier: langgenius/email:0.0.10@9943a2ef629e679fc31bd4da2349a19e1880d03187803d6b2d926db67ae413ad
+        provider_icon: /console/api/workspaces/current/plugin/icon?tenant_id=f2dd7ec6-34e0-4356-bf6f-1f8b23f16bf5&filename=8f2d1b31d65a6085e8a845cb9bb7ec37399576001e6065fceaf344bffbeb393f.svg
+        provider_id: langgenius/email/email
+        provider_name: langgenius/email/email
+        provider_type: builtin
+        selected: false
+        title: send email to multiple recipients
+        tool_configurations:
+          convert_to_html:
+            type: constant
+            value: true
+        tool_description: A tool for sending email to multiple recipients
+        tool_label: send email to multiple recipients
+        tool_name: send_mail_batch
+        tool_node_version: '2'
+        tool_parameters:
+          email_content:
+            type: mixed
+            value: '{{#1771521657497.text#}}'
+          send_to:
+            type: mixed
+            value: '["doohee323@gmail.com"]'
+          subject:
+            type: mixed
+            value: 일정 요약
+        type: tool
+      height: 88
+      id: '1771521737745'
+      position:
+        x: 1057.4285714285716
+        y: 239
+      positionAbsolute:
+        x: 1057.4285714285716
+        y: 239
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: ''
+        event_name: google_calendar_event_created
+        event_parameters: {}
+        plugin_id: langgenius/google_calendar_trigger
+        plugin_unique_identifier: langgenius/google_calendar_trigger:0.0.1@6afd18607b0cf299a253f314b88f5a89fbbdf6d1d529ebebe3dfc1998952779a
+        provider_id: langgenius/google_calendar_trigger/google_calendar_trigger
+        subscription_id: ''
+        title: Google Calendar Event Created
+        type: trigger-plugin
+      height: 85
+      id: '1771569920244'
+      position:
+        x: -91.42857142857144
+        y: 205
+      positionAbsolute:
+        x: -91.42857142857144
+        y: 205
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: ''
+        event_name: google_calendar_event_created
+        event_parameters: {}
+        plugin_id: langgenius/google_calendar_trigger
+        plugin_unique_identifier: langgenius/google_calendar_trigger:0.0.1@6afd18607b0cf299a253f314b88f5a89fbbdf6d1d529ebebe3dfc1998952779a
+        provider_id: langgenius/google_calendar_trigger/google_calendar_trigger
+        subscription_id: ''
+        title: Google Calendar Event Created
+        type: trigger-plugin
+      height: 85
+      id: '1771569980876'
+      position:
+        x: -84.28571428571429
+        y: 340.0000000000001
+      positionAbsolute:
+        x: -84.28571428571429
+        y: 340.0000000000001
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 34.948031083238675
+      y: 102.48784965531786
+      zoom: 0.6951647468059259
+  rag_pipeline_variables: []

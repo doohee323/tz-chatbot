@@ -1,0 +1,315 @@
+{
+  "updatedAt": "2026-02-20T21:41:01.349Z",
+  "createdAt": "2026-02-20T19:50:00.421Z",
+  "id": "e3MrkCu9b5B3Yvrh",
+  "name": "Chat2Gmail2",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "",
+        "height": 208,
+        "width": 230,
+        "color": 3
+      },
+      "id": "81da8e9a-d788-4eed-8921-793fd151e235",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        992
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fa43a283-e401-46e3-bf3c-9cc7fb7dae2f",
+              "name": "quote",
+              "type": "string",
+              "value": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d5a71108-ff33-4214-9662-510d9d30adfc",
+      "name": "Results",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        704,
+        1024
+      ],
+      "notesInFlow": true,
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "sendTo": "doohee323@gmail.com",
+        "subject": "Daily quote",
+        "emailType": "text",
+        "message": "=Hey,\n\nHere's a quote by {{ $json.author }}:\n\n\"{{ $json.quote }}\"",
+        "options": {}
+      },
+      "id": "41b56311-e6b1-4b57-9178-47ed568550d3",
+      "name": "Connect your Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1104,
+        1024
+      ],
+      "webhookId": "83a06a0c-4824-44ea-b593-18917e1b3fe4",
+      "notesInFlow": true,
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Nn42ot2O6dguZ9A7",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "Double-click here to connect!"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        384,
+        1024
+      ],
+      "id": "b03e9286-0765-4b76-8cc3-114615115ceb",
+      "name": "When chat message received",
+      "webhookId": "d3551a88-1864-444d-be37-d5a4665779c6",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "yY1iPWJRHqiUJECT",
+          "name": "Unnamed credential"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Results": {
+      "main": [
+        [
+          {
+            "node": "Connect your Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "45445b39-7746-487d-8e92-2f0c4955031b",
+  "activeVersionId": "c66ecce5-f52d-4040-8d7a-3e133871e059",
+  "versionCounter": 6,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-20T19:50:00.423Z",
+      "createdAt": "2026-02-20T19:50:00.423Z",
+      "role": "workflow:owner",
+      "workflowId": "e3MrkCu9b5B3Yvrh",
+      "projectId": "fS5Im3Hu2nJSPc5m",
+      "project": {
+        "updatedAt": "2026-02-20T16:12:59.424Z",
+        "createdAt": "2026-02-20T16:10:05.045Z",
+        "id": "fS5Im3Hu2nJSPc5m",
+        "name": "Doohee Hong <doohee323@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "78007740-fd9f-4231-88d3-8af7bf16f814",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-20T16:10:05.045Z",
+            "createdAt": "2026-02-20T16:10:05.045Z",
+            "userId": "78007740-fd9f-4231-88d3-8af7bf16f814",
+            "projectId": "fS5Im3Hu2nJSPc5m",
+            "user": {
+              "updatedAt": "2026-02-20T17:46:13.000Z",
+              "createdAt": "2026-02-20T16:09:58.312Z",
+              "id": "78007740-fd9f-4231-88d3-8af7bf16f814",
+              "email": "doohee323@gmail.com",
+              "firstName": "Doohee",
+              "lastName": "Hong",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "Wh9tBckGFXEJKTQC",
+                "userActivatedAt": 1771606028488
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-20",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-02-20T19:50:00.629Z",
+    "createdAt": "2026-02-20T19:50:00.629Z",
+    "versionId": "c66ecce5-f52d-4040-8d7a-3e133871e059",
+    "workflowId": "e3MrkCu9b5B3Yvrh",
+    "nodes": [
+      {
+        "parameters": {
+          "content": "",
+          "height": 208,
+          "width": 230,
+          "color": 3
+        },
+        "id": "81da8e9a-d788-4eed-8921-793fd151e235",
+        "name": "Sticky Note2",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1040,
+          992
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "fa43a283-e401-46e3-bf3c-9cc7fb7dae2f",
+                "name": "quote",
+                "type": "string",
+                "value": "={{ $json.chatInput }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "d5a71108-ff33-4214-9662-510d9d30adfc",
+        "name": "Results",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          704,
+          1024
+        ],
+        "notesInFlow": true,
+        "typeVersion": 3.4
+      },
+      {
+        "parameters": {
+          "sendTo": "doohee323@gmail.com",
+          "subject": "Daily quote",
+          "emailType": "text",
+          "message": "=Hey,\n\nHere's a quote by {{ $json.author }}:\n\n\"{{ $json.quote }}\"",
+          "options": {}
+        },
+        "id": "41b56311-e6b1-4b57-9178-47ed568550d3",
+        "name": "Connect your Gmail",
+        "type": "n8n-nodes-base.gmail",
+        "position": [
+          1104,
+          1024
+        ],
+        "webhookId": "83a06a0c-4824-44ea-b593-18917e1b3fe4",
+        "notesInFlow": true,
+        "typeVersion": 2.1,
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "Nn42ot2O6dguZ9A7",
+            "name": "Gmail account"
+          }
+        },
+        "notes": "Double-click here to connect!"
+      },
+      {
+        "parameters": {
+          "public": true,
+          "authentication": "basicAuth",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          384,
+          1024
+        ],
+        "id": "b03e9286-0765-4b76-8cc3-114615115ceb",
+        "name": "When chat message received",
+        "webhookId": "d3551a88-1864-444d-be37-d5a4665779c6",
+        "credentials": {
+          "httpBasicAuth": {
+            "id": "yY1iPWJRHqiUJECT",
+            "name": "Unnamed credential"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Results": {
+        "main": [
+          [
+            {
+              "node": "Connect your Gmail",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When chat message received": {
+        "main": [
+          [
+            {
+              "node": "Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Doohee Hong",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-02-20T21:27:44.621Z",
+        "id": 13,
+        "workflowId": "e3MrkCu9b5B3Yvrh",
+        "versionId": "c66ecce5-f52d-4040-8d7a-3e133871e059",
+        "event": "activated",
+        "userId": "78007740-fd9f-4231-88d3-8af7bf16f814"
+      }
+    ]
+  }
+}

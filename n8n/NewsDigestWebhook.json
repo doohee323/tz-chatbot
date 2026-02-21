@@ -1,0 +1,301 @@
+{
+  "name": "NewsDigestWebhook",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "id": "7446c416-040e-47e5-8614-7a187c0258e5",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        2240,
+        480
+      ],
+      "webhookId": "f8caeced-6619-487a-9e7d-40602ea6d416"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "region-assign",
+              "name": "region",
+              "type": "string",
+              "value": "={{ $json.region || $json.body?.region || $queryUrl?.region || \"서울\" }}"
+            },
+            {
+              "id": "email-assign",
+              "name": "email",
+              "type": "string",
+              "value": "={{ $json.email || $json.body?.email || \"doohee323@gmail.com\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "020faf34-db41-4a5d-8bd7-48043f434ee0",
+      "name": "Extract region",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2464,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://news.google.com/rss/search?q={{ encodeURIComponent($json.region) }}&hl=ko&gl=KR&ceid=KR:ko",
+        "options": {}
+      },
+      "id": "dec747d4-4e8d-4d1f-88ac-93fe35beb824",
+      "name": "Fetch news RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst region = items[0]?.json?.region || '서울';\nconst email = items[0]?.json?.email || 'doohee323@gmail.com';\nlet newsText = '';\nfor (const item of items) {\n  const body = item.json?.body || item.binary?.data?.toString('utf-8') || '';\n  const titles = body.match(/<title>[^<]+<\\/title>/g) || [];\n  const links = body.match(/<link>[^<]+<\\/link>/g) || [];\n  for (let i = 0; i < Math.min(15, titles.length); i++) {\n    const t = (titles[i] || '').replace(/<\\/?title>/g, '').trim();\n    const l = (links[i + 1] || links[i] || '').replace(/<\\/?link>/g, '').trim();\n    if (t && t !== 'Google News') newsText += (i + 1) + '. ' + t + '\\n   ' + l + '\\n';\n  }\n}\nif (!newsText) newsText = 'No articles found for region: ' + region;\nreturn [{ json: { region, email, newsText, itemCount: newsText.split('\\n').filter(x => /^\\d+\\./.test(x)).length } }];"
+      },
+      "id": "07fc75cc-d679-40a1-923c-1f76c5e3ba9c",
+      "name": "Parse and prepare news",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "당신은 뉴스 요약 전문가입니다.\n다음은 $json.region 지역의 뉴스 기사들입니다.\n각 기사의 핵심을 파악하여 간단히 요약하고, 전체 내용을 3-5개의 핵심 포인트로 정리해주세요.\n포맷: 마크다운으로 정렬된 글머리 기호로 작성해주세요.\n\n뉴스 기사들:\n$json.newsText",
+              "role": "user"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "c4d1e77d-cfec-4fa1-bcdb-5b95451e866f",
+      "name": "Summarize with Gemini",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        3136,
+        480
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "17EcJo2DzLJNuRmR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "summary-assign",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $json.text || $json.output || '뉴스 요약 생성 중...' }}"
+            },
+            {
+              "id": "region-assign",
+              "name": "region",
+              "type": "string",
+              "value": "={{ $('Parse and prepare news').item.json.region }}"
+            },
+            {
+              "id": "email-assign",
+              "name": "email",
+              "type": "string",
+              "value": "={{ $('Parse and prepare news').item.json.email }}"
+            },
+            {
+              "id": "6dd70894-6172-44f9-9300-b0806a4de705",
+              "name": "content.parts[0].text",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8feeb79b-f880-485f-91e0-04e898206b73",
+      "name": "Set summary for email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3488,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ '[뉴스 요약] ' + $json.region + ' 지역 주요 뉴스 - ' + new Date().toISOString().slice(0,10) }}",
+        "emailType": "html",
+        "message": "={{ '<style>body { font-family: Arial, sans-serif; line-height: 1.8; color: #333; }</style><h2>[' + $json.region + ' 지역 주요 뉴스 요약]</h2><p><strong>날짜:</strong> ' + new Date().toISOString().slice(0,10) + '</p><hr/><div>' + ($json.content?.parts?.[0]?.text || 'No summary').replace(/\\n\\n/g, '</p><p>').replace(/\\n/g, '<br/>').replace(/###\\s?/g, '<h3>').replace(/<\\/h3>/g, '</h3>').replace(/\\*\\*/g, '<strong>').replace(/<\\/strong>\\*\\*/g, '</strong>') + '</div><hr/><p style=\"font-size: 12px; color: #999;\">Gemini LLM으로 자동 생성된 이메일입니다</p>' }}",
+        "options": {}
+      },
+      "id": "6ee0e2de-fb9f-4ff8-825c-60f8d7c198da",
+      "name": "Send email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3712,
+        480
+      ],
+      "webhookId": "f67bad55-b15b-43f4-b2b8-e0200cb19bd1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "W9dhT5bLsTa6Pj9s",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "91ad90b5-df3c-45cd-9cf5-ccdb36bf5266",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3936,
+        480
+      ]
+    }
+  ],
+  "pinData": {
+    "Summarize with Gemini": [
+      {
+        "json": {
+          "content": {
+            "parts": [
+              {
+                "text": "## {{ $json.region }} 뉴스 요약\n\n### 각 기사 요약\n\n*   **[기사 1 요약 예시]**: 강원도는 고령화 문제 심화에 대응하여 노인 일자리 확대, 맞춤형 돌봄 서비스 강화, 건강 증진 프로그램 도입 등을 포함하는 '어르신 복지 종합 계획'을 발표했으며, 특히 농촌 지역 독거노인 지원에 500억 원 규모의 예산을 투입할 계획입니다.\n*   **[기사 2 요약 예시]**: 설악산 케이블카 설치 사업이 관광 활성화를 주장하는 강원도와 생태계 파괴를 우려하는 환경 단체 간의 갈등 속에서 재추진 움직임을 보이고 있으며, 최종 결정은 환경영향평가 결과에 따라 달라질 것으로 예상됩니다.\n*   **[기사 3 요약 예시]**: 강원도가 비수기 없는 사계절 관광을 목표로 평창과 강릉 일대에서 겨울 스포츠 시설을 활용한 여름 축제를 기획하고 있으며, 물놀이, 캠핑, 이색 체험 등으로 관광객을 유치하려 합니다.\n*   **[기사 4 요약 예시]**: 최근 강원도 내 배추와 감자 등 농산물 생산량 증가로 가격이 폭락하여 농민들이 어려움을 겪고 있으며, 강원도는 농산물 수매 확대와 직거래 장터 활성화를 통해 농민 지원에 나섰고 정부의 추가 대책 마련을 촉구했습니다.\n\n### 전체 핵심 포인트\n\n*   **고령화 대응 및 복지 강화:** 강원도는 심화하는 고령화 문제 해결을 위해 노인 복지 종합 계획을 수립하고, 특히 농촌 지역의 독거노인 지원에 초점을 맞춰 맞춤형 서비스를 제공할 예정입니다.\n*   **관광 산업 활성화 노력:** 사계절 관광객 유치를 목표로 설악산 케이블카 재추진 논의와 겨울 스포츠 연계 여름 축제 기획 등 다양한 시도를 통해 지역 경제 활성화를 모색하고 있습니다.\n*   **농업 분야의 어려움 및 지원책:** 농산물 가격 폭락으로 인한 농민들의 경제적 어려움이 가중되고 있으며, 강원도는 수매 확대 및 직거래 장터 활성화 등의 단기적 지원책과 함께 정부 차원의 근본적인 대책 마련을 요구하고 있습니다.\n*   **환경 보전과 개발의 균형 모색:** 설악산 케이블카 사례에서 보듯이, 관광 개발을 통한 경제 활성화와 자연 생태계 보전이라는 두 가지 중요한 가치 사이에서 적절한 균형점을 찾는 것이 지역의 주요 과제로 부상하고 있습니다."
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP",
+          "index": 0
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract region",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract region": {
+      "main": [
+        [
+          {
+            "node": "Fetch news RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch news RSS": {
+      "main": [
+        [
+          {
+            "node": "Parse and prepare news",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse and prepare news": {
+      "main": [
+        [
+          {
+            "node": "Summarize with Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize with Gemini": {
+      "main": [
+        [
+          {
+            "node": "Set summary for email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set summary for email": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "feef1e94-88d3-4b66-8e92-b09303d7e266",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6ed00e82e89a25b0ea2d79cb1a5b8a17a74cfe159cdbdcfd7179123a6b1fd513"
+  },
+  "id": "TIEpfiJ25f4aSpRG",
+  "tags": []
+}

@@ -23,6 +23,20 @@ image:
 # Vector DB: use existing RAG Qdrant (rag namespace)
 api:
   extraEnv:
+    # OAuth redirect/callback base URL (chart ConfigMap often has these empty → Google 400). install.sh replaces DIFY_BASE_URL_REPLACE.
+    - name: CONSOLE_API_URL
+      value: "DIFY_BASE_URL_REPLACE"
+    # - name: CONSOLE_WEB_URL
+    #   value: "DIFY_BASE_URL_REPLACE"
+    - name: SERVICE_API_URL
+      value: "DIFY_BASE_URL_REPLACE"
+    - name: APP_WEB_URL
+      value: "DIFY_BASE_URL_REPLACE"
+    - name: APP_API_URL
+      value: "DIFY_BASE_URL_REPLACE"
+    # Plugin/Webhook trigger callback base URL (defaults to http://localhost:5001 if unset). Must be public URL.
+    - name: TRIGGER_URL
+      value: "DIFY_BASE_URL_REPLACE"
     # Plugin (e.g. dify_extractor) fetches files from this URL; must be reachable from plugin-daemon pod.
     # See: https://github.com/langgenius/dify-official-plugins/issues/1816
     - name: FILES_URL
@@ -56,6 +70,37 @@ api:
         secretKeyRef:
           name: dify-minio-secret
           key: S3_SECRET_KEY
+    # OpenTelemetry: disabled — gunicorn+gevent causes "Failed to detach context" (OTel contextvars vs greenlets). Set "true" when collector is ready and if Dify fixes gevent compatibility.
+    - name: ENABLE_OTEL
+      value: "false"
+    - name: OTLP_TRACE_ENDPOINT
+      value: ""
+    - name: OTLP_METRIC_ENDPOINT
+      value: ""
+    - name: OTLP_BASE_ENDPOINT
+      value: "http://opentelemetry-collector.opentelemetry-operator.svc.cluster.local:4318"
+    - name: OTLP_API_KEY
+      value: ""
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: "http"
+    - name: OTEL_EXPORTER_TYPE
+      value: "otlp"
+    - name: OTEL_SAMPLING_RATE
+      value: "0.1"
+    - name: OTEL_BATCH_EXPORT_SCHEDULE_DELAY
+      value: "5000"
+    - name: OTEL_MAX_QUEUE_SIZE
+      value: "2048"
+    - name: OTEL_MAX_EXPORT_BATCH_SIZE
+      value: "512"
+    - name: OTEL_METRIC_EXPORT_INTERVAL
+      value: "60000"
+    - name: OTEL_BATCH_EXPORT_TIMEOUT
+      value: "10000"
+    - name: OTEL_METRIC_EXPORT_TIMEOUT
+      value: "30000"
+    - name: OTEL_SERVICE_NAME
+      value: "dify-api"
   # Base URL for access. If empty, redirect/CORS errors and port-forward/Ingress won't work.
   # install.sh replaces DIFY_BASE_URL_REPLACE with actual URL (default: https://dify.k8s_domain)
   # For port-forward only: DIFY_BASE_URL=http://localhost:8080 bash install.sh
@@ -108,6 +153,37 @@ worker:
         secretKeyRef:
           name: dify-minio-secret
           key: S3_SECRET_KEY
+    # OpenTelemetry: disabled — gunicorn+gevent causes "Failed to detach context" (OTel contextvars vs greenlets). Set "true" when collector is ready and if Dify fixes gevent compatibility.
+    - name: ENABLE_OTEL
+      value: "false"
+    - name: OTLP_TRACE_ENDPOINT
+      value: ""
+    - name: OTLP_METRIC_ENDPOINT
+      value: ""
+    - name: OTLP_BASE_ENDPOINT
+      value: "http://opentelemetry-collector.opentelemetry-operator.svc.cluster.local:4318"
+    - name: OTLP_API_KEY
+      value: ""
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: "http"
+    - name: OTEL_EXPORTER_TYPE
+      value: "otlp"
+    - name: OTEL_SAMPLING_RATE
+      value: "0.1"
+    - name: OTEL_BATCH_EXPORT_SCHEDULE_DELAY
+      value: "5000"
+    - name: OTEL_MAX_QUEUE_SIZE
+      value: "2048"
+    - name: OTEL_MAX_EXPORT_BATCH_SIZE
+      value: "512"
+    - name: OTEL_METRIC_EXPORT_INTERVAL
+      value: "60000"
+    - name: OTEL_BATCH_EXPORT_TIMEOUT
+      value: "10000"
+    - name: OTEL_METRIC_EXPORT_TIMEOUT
+      value: "30000"
+    - name: OTEL_SERVICE_NAME
+      value: "dify-worker"
 
 # Use built-in PostgreSQL, Redis (chart defaults)
 postgresql:

@@ -6,9 +6,16 @@
 • /chat 접근: /chat?token=<JWT>. JWT payload: system_id, user_id, exp. 같은 CHAT_GATEWAY_JWT_SECRET으로 앱 백엔드가 서명해 발급 → 사용자를 채팅 페이지로 보냄  
 • 대화: gateway가 Dify로 보낸/받은 메시지 DB 저장(설정에 따라). /v1/conversations, /v1/conversations/{id}/messages로 조회. POST /v1/sync으로 Dify→DB 동기화
 
-**DB 설정 (chat_admin)**  
-• PostgreSQL DB 이름: chat_admin. bootstrap에 DB 생성 없음 → 수동 생성  
+**DB 설정 (chat_admin)**
+• PostgreSQL DB 이름: chat_admin. bootstrap에 DB 생성 없음 → 수동 생성
 • 예: kubectl exec로 postgres Pod 접속 후 CREATE DATABASE chat_admin; (비밀번호는 chat-admin Secret에서). 앱 배포 시 POSTGRES_* 환경변수 또는 Secret으로 접속 정보 전달
+
+**시스템별 Dify 지원 (복수 Dify)**
+• **공용 Dify** (기본): DIFY_BASE_URL, DIFY_API_KEY
+• **시스템별 Dify**: 시스템마다 다른 Dify 사용 가능
+  - `DIFY_DRILLQUIZ_BASE_URL`, `DIFY_DRILLQUIZ_API_KEY`
+  - `DIFY_COINTUTOR_BASE_URL`, `DIFY_COINTUTOR_API_KEY`
+  - 지정하지 않은 시스템은 기본값(DIFY_BASE_URL) 사용
 
 **배포 순서**  
 1. 인프라(bootstrap.sh) 2. DB(chat_admin) 생성 3. Secret(chat-admin·chat-gateway용) 4. 앱 배포(k8s.sh 또는 ci.sh, Jenkins 없이 로컬 가능) 5. Ingress(admin·gateway 호스트)  

@@ -92,7 +92,46 @@ kubectl logs -n dify deployment/dify-api --tail=300 | grep -A 5 -i "qa_chunk\|In
 3. **지식베이스를 새로 만든 경우**  
    - "일반 문서 업로드" 방식으로 지식 생성 → Q&A CSV 업로드 → Column 0, 1 설정 → **저장 및 처리**를 한 번 성공시키면, 그때 컬렉션이 생성됩니다. 이전에 "Index chunk variable" 등으로 실패했다면 컬렉션이 안 만들어진 상태일 수 있음.
 
-## 6. 요약
+## 6. 워크플로 "Invalid variable" / K8s 로그에서 보이는 에러
+
+### 6.1 Invalid variable 체크리스트 (UI)
+
+퍼블리시 전 **Checklist** 에서 "Invalid variable" 가 나오면, **노드별로 필수 입력/출력 변수가 제대로 연결되지 않았다**는 뜻입니다.  
+이 검사는 **프론트엔드**에서 이뤄지므로, **dify-api 로그에는 "Invalid variable" 문자열이 안 찍힐 수 있습니다.**
+
+**조치 (노드별)**
+
+- **Code 노드 (일정 데이터 합치기 등)**  
+  - **Output Variables** 에 코드가 `return` 하는 키와 동일한 이름·타입을 추가 (예: `events`, Array).  
+  - UI에서 + 버튼이 안 되면: Code 노드를 **새로 추가**한 뒤, **먼저** Output Variables 에 `events`(Array) 추가하고, 그 다음 코드 붙여넣기.
+- **LLM 노드**  
+  - 시스템 프롬프트에 **사용하지 않는 변수** (예: `{{#context#}}`) 가 있으면 제거.  
+  - 유저 프롬프트의 변수(예: `{{#노드ID.events#}}`)가 **실제 Code 노드 출력 변수명**과 일치하는지 확인.
+- **Tool 노드 (이메일 등)**  
+  - 필수 파라미터(subject, email_content, send_to)에 **변수 선택** 또는 **상수**가 들어가 있는지 확인.  
+  - LLM 구조화 출력(subject, email_body)을 쓰는 경우, 이메일 노드에서 **LLM 노드 → subject / email_body** 로 매핑.
+
+### 6.2 K8s dify-api 로그에서 자주 보이는 에러
+
+아래처럼 로그를 보면 원인 파악에 도움이 됩니다.
+
+```bash
+kubectl logs -n dify deployment/dify-api --tail=500 | grep -i -E "Invalid|Error|ValueError|validate_graph"
+```
+
+| 로그/에러 | 의미 | 조치 |
+|-----------|------|------|
+| **Invalid params** + `ValueError: query is required` | MCP/챗 앱 호출 시 `query` 파라미터가 비어 있음 | 워크플로가 아닌 **챗 앱** 호출 시 입력 필드 확인. |
+| **ValueError: 'plugin-trigger' is not a valid NodeType** (in `validate_graph_structure`) | **YAML/DSL 임포트** 시 노드 타입이 `plugin-trigger`(하이픈)로 전달됨. Dify API는 `trigger-plugin` 등 다른 이름만 허용. | YAML에서 노드/엣지 타입을 **trigger-plugin** 으로 통일. 이미 수정된 `Calandar-Email.yml` 은 `trigger-plugin` 사용. 다른 YAML 임포트 시 동일하게 수정. |
+
+### 6.3 요약
+
+| 확인 항목 | 명령어 |
+|-----------|--------|
+| Invalid variable 관련 API 로그 | `kubectl logs -n dify deployment/dify-api --tail=500 \| grep -i invalid` |
+| 워크플로 검증/임포트 에러 | `kubectl logs -n dify deployment/dify-api --tail=500 \| grep -E "validate_graph|NodeType|plugin-trigger"` |
+
+## 7. 요약 (전체)
 
 | 확인 항목 | 명령어 |
 |-----------|--------|
@@ -102,3 +141,5 @@ kubectl logs -n dify deployment/dify-api --tail=300 | grep -A 5 -i "qa_chunk\|In
 | qa_chunk 에러 시 | Q&A CSV 업로드 후 열 번호 **0, 1** (0-based) 설정 |
 | Index chunk variable / 청크 0개 | **일반 지식 생성(문서 업로드)** 방식으로 지식베이스 새로 만들어서 Q&A CSV 업로드 |
 | Qdrant 404 Collection doesn't exist | 지식베이스에서 해당 문서 **재처리**하여 벡터 인덱스(Qdrant 컬렉션) 생성 |
+| Invalid variable (체크리스트) | Code 출력 변수 선언, LLM/Tool 변수 매핑 확인 (섹션 6.1) |
+| YAML 임포트 시 NodeType 에러 | `plugin-trigger` → `trigger-plugin` 등 API가 기대하는 노드 타입으로 수정 |
