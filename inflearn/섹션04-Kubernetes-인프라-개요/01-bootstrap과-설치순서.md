@@ -27,3 +27,9 @@ export KUBECONFIG=~/.kube/your-config   # 필요 시
 
 - `TZ_REPO_ROOT`는 스크립트가 자동으로 설정
 - 각 단계에서 이미 설치된 경우 "Already installed, skipping" 메시지가 나옵니다.
+
+## 제거(Uninstall)
+
+- **`./bootstrap.sh uninstall`**: Dify와 RAG 스택만 제거 (내부적으로 `rag/uninstall.sh` 호출)
+- `rag/uninstall.sh`는 **Dify**(Ingress → Helm → namespace dify)를 먼저 제거한 뒤 **RAG**(Ingress → CronJob/Job → Backend/Frontend → Qdrant → namespace rag)를 제거합니다. MinIO·Ingress NGINX는 제거하지 않습니다.
+- 재설치: `./bootstrap.sh`

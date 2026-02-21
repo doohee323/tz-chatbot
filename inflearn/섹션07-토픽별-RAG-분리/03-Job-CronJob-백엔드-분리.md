@@ -8,8 +8,9 @@
 
 ## CronJob (주기 실행)
 
-- **CoinTutor**: `rag-ingestion-cronjob-cointutor.yaml` (예: 매일 02:00)
-- **DrillQuiz**: `rag-ingestion-cronjob-drillquiz.yaml` (예: 매일 02:30)
+- **CoinTutor**: `rag-ingestion-cronjob-cointutor.yaml` (예: 매일 02:00) — 증분 재색인
+- **DrillQuiz**: `rag-ingestion-cronjob-drillquiz.yaml` (예: 매일 02:30) — 증분 재색인
+- **전체(Full) 재색인**용 CronJob도 있음: `rag-ingestion-cronjob-cointutor-full`, `rag-ingestion-cronjob-drillquiz-full` (저장소 `rag/cointutor/`, `rag/drillquiz/` 내 *-full YAML). 필요 시 이 CronJob에서 Job을 생성해 한 번 실행하면 전체 재인덱싱됩니다.
 - CronJob에서 한 번 실행하려면:  
   `kubectl create job -n rag ingest-cointutor-1 --from=cronjob/rag-ingestion-cronjob-cointutor`
 

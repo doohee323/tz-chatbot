@@ -3,6 +3,7 @@
 ## 슬라이드 내용 (한 장)
 
 **ingest.py 흐름**  
+• **저장소**: `rag/scripts/ingest.py` (install.sh가 ConfigMap `rag-ingestion-script`로 만들어 Pod `/config/ingest.py` 마운트)  
 • 환경변수(MINIO_*, QDRANT_*, EMBEDDING_PROVIDER, GEMINI/OPENAI API Key, CHUNK_SIZE, MINIO_PREFIX, QDRANT_COLLECTION 등) → MinIO prefix 아래 객체 목록·다운로드 → **Loader**(PyPDFLoader, TextLoader) → **Splitter**(RecursiveCharacterTextSplitter) → **Embedding**(OpenAI/Gemini) → **QdrantVectorStore** upsert. (선택) INCREMENTAL=true 시 변경/삭제만 반영
 
 **LangChain 구성**  

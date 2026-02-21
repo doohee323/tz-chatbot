@@ -15,7 +15,7 @@
 | RAG Backend | rag-backend (Deployment) | rag-backend-drillquiz |
 | Dify 도구 URL | Backend Service URL (CoinTutor) | Backend Service URL (DrillQuiz) |
 
-• 한 버킷(rag-docs) 안 경로만 나누고, 컬렉션·Backend는 토픽별 완전 분리. Job/CronJob은 같은 ingest.py·ConfigMap, 환경변수만 토픽별로 다름.
+• 한 버킷(rag-docs) 안 경로만 나누고, 컬렉션·Backend는 토픽별 완전 분리. Job/CronJob은 같은 ingest.py·ConfigMap, 환경변수만 토픽별로 다름. **전체 재색인**: `*-full` CronJob(rag-ingestion-cronjob-cointutor-full, -drillquiz-full)에서 Job 생성.
 
 ---
 

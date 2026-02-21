@@ -11,9 +11,9 @@
 • DrillQuiz용·CoinTutor용 앱 각각 생성 후, 각각에 RAG 도구 URL 연결
 
 **RAG 도구 URL (K8s 내부)**  
-• 워크플로우에 도구 노드 추가 → 타입 API(Http) → URL에 RAG Backend 검색 API 주소  
-• CoinTutor: http://rag-backend.rag.svc.cluster.local:8000/query  
-• DrillQuiz: http://rag-backend-drillquiz.rag.svc.cluster.local:8000/query  
+• **방식 1**: 도구 노드 → API(Http) → URL만 설정 (CoinTutor/DrillQuiz Backend 주소)  
+• **방식 2 (커스텀 도구)**: Tools → Custom → Schema에 OpenAPI 붙여넣기 — `dify/cointutor/cointutor-rag-openapi.yaml`, `dify/drillquiz/drillquiz-rag-openapi.yaml`  
+• CoinTutor: http://rag-backend.rag.svc.cluster.local:8000/query · DrillQuiz: http://rag-backend-drillquiz.rag.svc.cluster.local:8000/query  
 • Dify Pod가 rag NS의 Service에 접근 가능해야 함. 인증 필요 시 도구 설정에서 Header에 API 키 등 추가
 
 **검증**: Dify에서 테스트 채팅 또는 실제 채팅으로 RAG 도구 호출·결과 반영 확인. API Key는 chat-gateway·chat-admin의 DIFY_API_KEY 등에 설정

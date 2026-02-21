@@ -5,7 +5,7 @@
 - **MinIO** 버킷(`rag-docs`)의 지정 prefix(`raw/cointutor/`, `raw/drillquiz/` 등) 아래 파일을 읽어
 - **LangChain**으로 로드·청킹·임베딩한 뒤
 - **Qdrant** 컬렉션에 upsert하는 스크립트입니다.
-- K8s에서는 **Job/CronJob** 안에서 이 스크립트를 실행합니다 (ConfigMap으로 스크립트·requirements 제공).
+- 저장소 내 경로: **`rag/scripts/ingest.py`** (및 `requirements-ingest.txt`). K8s에서는 **Job/CronJob** 안에서 이 스크립트를 실행하며, install.sh가 이 파일들을 ConfigMap `rag-ingestion-script`로 만들어 Pod의 `/config/ingest.py`로 마운트합니다.
 
 ## 흐름 요약
 
