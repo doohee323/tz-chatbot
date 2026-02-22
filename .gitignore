@@ -13,6 +13,9 @@ chat-gateway/.env
 # Refer folder
 refer/
 
+# Cursor IDE — may contain API keys, MCP tokens, Bearer auth
+.cursor/
+
 # IDE / OS
 .idea/
 .vscode/
